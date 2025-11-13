@@ -9,6 +9,10 @@ bin/
 
 .DS*
 
+# Embedded git repositories (keep them separate or as submodules)
+Expert_Allocation/
+LayerIF_Pruning_New/
+
 # data files
 *.gz
 dataset/cifar/*
