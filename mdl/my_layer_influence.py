@@ -196,6 +196,94 @@ def main(
 
     print(f"layer indices: {layer_indices.keys()}")
 
+    # Data Setup
+    # Load data (assuming pre-processed HF dataset)
+    if data_path.endswith('.json') or data_path.endswith('.jsonl'):
+        data = load_dataset('json', data_files=data_path)
+    else:
+        data = load_from_disk(data_path)
+
+    if 'train' in data:
+        train_data = data['train']
+    else:
+        train_data = data
+    
+    # Use Trainer to get a clean dataloader
+    trainer = Trainer(
+        model=model,
+        train_dataset=train_data,
+        args=transformers.TrainingArguments(
+            per_device_train_batch_size=1, # Force batch size 1 for per-sample gradients
+            output_dir=output_dir,
+            remove_unused_columns=False,
+        ),
+        data_collator=transformers.DataCollatorForSeq2Seq(
+            tokenizer, pad_to_multiple_of=8, return_tensors='pt', padding=True
+        ),
+    )
+
+    train_dataloader = trainer.get_train_dataloader()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    print('Computing training gradients...')
+    stored_products = []
+
+    for i, batch in enumerate(tqdm(train_dataloader)):
+        # Compute gradient
+        grad_vec = compute_gradients(model, batch, device)
+
+        # TODO: Apply Hessian Inverse here
+        # For now, we assume H^-1 approx identity, so product = grad_ve
+        product = grad_vec.cpu()
+
+        stored_products.append(product)
+
+        # Break early for testing if you want
+        if i >= 10: break
+
+    print(f"stored {len(stored_products)} training vectors.")
+
+    # Validation loop
+    val_dataloader = trainer.get_eval_dataloader()
+
+    print(f"Processing validation samples...")
+
+    # We will store results here
+    # Structure: List of dicts, where each dict is {layer_id: influence_score}
+    all_val_influences = []
+
+    for j, batch in enumerate(tqdm(val_dataloader)):
+        # Compute validation gradient
+        val_grad_vec = compute_gradients(model, batch, device)
+        val_grad_vec = val_grad_vec.cpu()
+
+        total_element_wise_product = torch.zero_like(val_grad_vec)
+
+        for train_vec in stored_products:
+            # Element-wise product of (H^-1 g_train) and g_val
+            # We accumulate this vector
+            total_element_wise_product += (train_vec * val_grad_vec)
+
+        # Now we have a vector where each element is the total influence on that parameter
+        # We aggregate these by layer
+
+        sample_layer_influence = {}
+        for layer_id, indices in layer_indices.items():
+            if len(indices) > 0:
+                # Sum the influence value for all parameters in this layer
+                layer_vals = total_element_wise_product[indices]
+                infl_val = layer_vals.sum().item()
+                sample_layer_influence[layer_id] = infl_val
+
+        all_val_influences.append(sample_layer_influence)
+
+        # Print or save
+        print(f"Val Sample {j} Influence per layer: {sample_layer_influence}")
+
+        if j >= 2; break # limit for testing
+
+
+
 if __name__ == "__main__":
     fire.Fire(main)
 
