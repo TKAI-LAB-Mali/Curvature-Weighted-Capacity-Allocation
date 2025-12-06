@@ -72,7 +72,7 @@ def main():
     parser.add_argument('--save', type=str, default=None, help='Path to save results')
     parser.add_argument('--save_model', type=str, default=None, help='Path to save the model')
     
-    
+    experts_path = '../Expert_Allocation/layerIF_Computation/outputs/layerIF_values/mistral-7B'
     flops_paths = "../Expert_Allocation/layerIF_outputs/mistral_mola_46810_224_glue_cola_all"
 
     per_layer_base_flops, per_layer_lora_flops_scaled = get_flops(flops_paths)
