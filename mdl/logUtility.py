@@ -63,6 +63,52 @@ def tokenize_function(examples, tokenizer, max_seq_length):
         max_length=max_seq_length
     )
 
+def get_el(layer_quality, c_l, lambda_value=1, beta=1, alpha=0.1, gamma=1):
+    value = gamma * layer_quality**beta / (alpha + lambda_value * c_l)
+    return max(value - 1.0, 0.0)
+
+def logUtility(budget: int, layerIF: list, layer_quality: list):
+    cost = 0
+    lambda_value = 0.0
+    c_l = [1.0] * len(layerIF)
+    layer_wise_lambda = [0.0] * len(layerIF)
+    for layer in range(len(layerIF)):
+        e_l = get_el(layer_quality[layer],
+                    c_l[layer],
+                    )
+        cost += c_l[layer] * e_l[layer]
+    if cost <= budget:
+        lambda_value = 0.0
+        return lambda_value, e_l
+    else:
+        def get_g(lambda_value):
+            value = 0
+            for layer in range(len(layerIF)):
+                value += c_l[layer] * get_el(layer_quality[layer],
+                                             c_l[layer]) - budget
+            return value
+        
+        lambda_lb = 0
+        lambda_ub = 1
+        while get_g(lambda_ub) > 0:
+            lambda_ub += 0.1*lambda_ub
+        print(f"g(lambda_lb): {get_g(lambda_lb)}")
+        print(f"g(lambda_ub): {get_g(lambda_ub)}")
+
+        epsilon = 0.1
+        lambda_avg = (lambda_lb + lambda_ub) / 2.0
+        while abs(get_g(lambda_avg)) > epsilon:
+            lambda_avg = (lambda_lb + lambda_ub) / 2.0
+        if get_el(lambda_avg) > 0:
+            lambda_lb = lambda_avg
+        else:
+            lambda_ub = lambda_avg
+        
+        for layer in range(len(layerIF)):
+            e_l[layer] = get_el(layer_quality[layer], c_l[layer])
+        return lambda_avg, e_l
+        
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, help='model type')
@@ -179,6 +225,9 @@ def main():
 
     # Print the number of trainable parameters
     model.print_trainable_parameters()
+
+
+    
 
     
 
