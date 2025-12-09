@@ -73,41 +73,48 @@ def logUtility(budget: int, layer_quality: list):
     cost = 0
     lambda_value = 0.0
     c_l = [1.0] * len(layer_quality)
-    layer_wise_lambda = [0.0] * len(layer_quality)
+    e_l = [0.0] * len(layer_quality)
     for layer in range(len(layer_quality)):
-        e_l = get_el(layer_quality[layer],
+        e_l[layer] = get_el(layer_quality[layer],
                     c_l[layer],
-                    )
+                    lambda_value)
         cost += c_l[layer] * e_l[layer]
     if cost <= budget:
         lambda_value = 0.0
         return lambda_value, e_l
     else:
-        def get_g(lambda_value):
+        def get_g(lambda_val):
             value = 0
             for layer in range(len(layer_quality)):
                 value += c_l[layer] * get_el(layer_quality[layer],
-                                             c_l[layer]) - budget
+                                             c_l[layer],
+                                             lambda_val) - budget
             return value
         
-        lambda_lb = 0
-        lambda_ub = 1
+        lambda_lb = 0.0
+        lambda_ub_init = 1.0
+        lambda_ub = 1.0
+        t = 0
         while get_g(lambda_ub) > 0:
-            lambda_ub += 0.1*lambda_ub
+            lambda_ub = lambda_ub_init * (1.0 + math.exp(1))**t
+            t += 1
         print(f"g(lambda_lb): {get_g(lambda_lb)}")
         print(f"g(lambda_ub): {get_g(lambda_ub)}")
 
         epsilon = 0.1
         lambda_avg = (lambda_lb + lambda_ub) / 2.0
-        while abs(get_g(lambda_avg)) > epsilon:
+        g_val = get_g(lambda_avg)
+        print(f"lambda_avg: {lambda_avg}, g_val: {g_val}, epsilon: {epsilon}")
+        while abs(g_val) > epsilon:
             lambda_avg = (lambda_lb + lambda_ub) / 2.0
-        if get_el(lambda_avg) > 0:
-            lambda_lb = lambda_avg
-        else:
-            lambda_ub = lambda_avg
+            g_val = get_g(lambda_avg)
+            if g_val > 0:
+                lambda_lb = lambda_avg
+            else:
+                lambda_ub = lambda_avg
         
         for layer in range(len(layer_quality)):
-            e_l[layer] = get_el(layer_quality[layer], c_l[layer])
+            e_l[layer] = get_el(layer_quality[layer], c_l[layer], lambda_avg)
         return lambda_avg, e_l
         
 
