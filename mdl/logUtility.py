@@ -65,7 +65,7 @@ def tokenize_function(examples, tokenizer, max_seq_length):
         max_length=max_seq_length
     )
 
-def get_el(layer_quality, c_l, lambda_value=1, beta=1, alpha=0.1, gamma=1):
+def get_el(layer_quality, c_l, lambda_value=1, beta=2, alpha=0.5, gamma=0.9):
     value = gamma * layer_quality**beta / (alpha + lambda_value * c_l)
     return max(value - 1.0, 0.0)
 
@@ -88,7 +88,8 @@ def logUtility(budget: int, layer_quality: list):
             for layer in range(len(layer_quality)):
                 value += c_l[layer] * get_el(layer_quality[layer],
                                              c_l[layer],
-                                             lambda_val) - budget
+                                             lambda_val)
+            value -= budget
             return value
         
         lambda_lb = 0.0
@@ -105,9 +106,11 @@ def logUtility(budget: int, layer_quality: list):
         lambda_avg = (lambda_lb + lambda_ub) / 2.0
         g_val = get_g(lambda_avg)
         print(f"lambda_avg: {lambda_avg}, g_val: {g_val}, epsilon: {epsilon}")
+        print(f"initial abs(g_val): {abs(g_val)}")
         while abs(g_val) > epsilon:
             lambda_avg = (lambda_lb + lambda_ub) / 2.0
             g_val = get_g(lambda_avg)
+            print(f"abs(g_val): {abs(g_val)}")
             if g_val > 0:
                 lambda_lb = lambda_avg
             else:
@@ -236,17 +239,18 @@ def main():
     # model.print_trainable_parameters()
 
     layerIFs = util.get_IF()
-    budget = 4 * len(layerIFs)
+    budget = 160 #8 * len(layerIFs)
     # layer_quality = [math.sqrt(value) for value in layerIFs]
     lambda_avg, e_l = logUtility(budget, layer_quality=layerIFs)
-    print(f"lambda_avg: {lambda_avg}")
-    print(f"e_l: {e_l}")
-
-    
-
-    
-
-    
+    print(f"lambda_avg: {lambda_avg}, sum(e_l): {sum(e_l)}")
+    print(f"original e_l: {e_l}")
+    e_l = np.array([int(round(x)) for x in e_l])
+    print(f"rounded e_l: {e_l}")
+    print(f"sum(e_l): {sum(e_l)}, budget:{budget}")
+    layerIF_experts = np.array([1, 11, 9, 7, 8, 9, 9, 7, 8, 8, 8, 7, 6, 8, 6, 4, 7, 3, 3, 3, 4, 4, 3, 2, 5, 2, 1, 2, 1, 2, 1, 1])
+    assert len(e_l) == len(layerIF_experts)
+    error = np.sqrt(np.sum((layerIF_experts - e_l)**2) / len(e_l))
+    print(f"L2 error between MDL and layerIF prediction of experts: {error}")
 
 if __name__ == '__main__':
     main()
