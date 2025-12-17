@@ -1,3 +1,8 @@
+"""
+Implementation of Alg-1 from overleaf
+"""
+
+
 import argparse
 import json
 import os
@@ -247,7 +252,11 @@ def main():
     e_l = np.array([int(round(x)) for x in e_l])
     print(f"rounded e_l: {e_l}")
     print(f"sum(e_l): {sum(e_l)}, budget:{budget}")
+
+    # number of experts per layer obtained from Hadi's code
     layerIF_experts = np.array([1, 11, 9, 7, 8, 9, 9, 7, 8, 8, 8, 7, 6, 8, 6, 4, 7, 3, 3, 3, 4, 4, 3, 2, 5, 2, 1, 2, 1, 2, 1, 1])
+    
+    # check the difference between our number of experts and Hadi's values
     assert len(e_l) == len(layerIF_experts)
     error = np.sqrt(np.sum((layerIF_experts - e_l)**2) / len(e_l))
     print(f"L2 error between MDL and layerIF prediction of experts: {error}")

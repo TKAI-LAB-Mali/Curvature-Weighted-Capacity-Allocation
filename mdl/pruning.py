@@ -1,3 +1,8 @@
+"""
+Implementation of Alg-3 from overleaf
+"""
+
+
 import os
 import numpy as np
 import torch
@@ -37,6 +42,8 @@ def calculate_retained_metrics(json_file, sparsity_ratio=0.3, b=16,
             if module_name not in unique_base_modules:
                 unique_base_modules.add(module_name)
                 # Params = rows * cols
+
+                #TO-DO: @Theophilus please check following step for getting n_l in the objective function 
                 base_params = item['in_features'] * item['out_features']
                 total_base_params += base_params
                 total_base_flops += item['base_flops_per_token']
