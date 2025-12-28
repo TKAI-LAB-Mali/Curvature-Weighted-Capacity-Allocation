@@ -1,3 +1,5 @@
+share/
+*.txt
 *prompt*
 share/
 *.pyc

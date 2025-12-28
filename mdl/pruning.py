@@ -26,6 +26,7 @@ def calculate_retained_metrics(json_file, sparsity_ratio=0.3, b=16,
         data = json.load(f)
     
     unique_base_modules = set()
+    per_layer_params = {}
     total_base_params = 0
     total_base_flops = 0
     total_lora_params = 0
@@ -45,33 +46,36 @@ def calculate_retained_metrics(json_file, sparsity_ratio=0.3, b=16,
 
                 #TO-DO: @Theophilus please check following step for getting n_l in the objective function 
                 base_params = item['in_features'] * item['out_features']
-                total_base_params += base_params
-                total_base_flops += item['base_flops_per_token']
+                per_layer_params[layer_idx] =base_params    # n_l from the algorithm number of parameters
+
+
+                # total_base_params += base_params
+                # total_base_flops += item['base_flops_per_token']
 
             # 2. LoRA Stats (Count ALL, as they are additive)
             # LoRA Params = (A_rows * A_cols) + (B_rows * B_cols)
-            lora_p = (item['A_shape'][0] * item['A_shape'][1]) + \
-                     (item['B_shape'][0] * item['B_shape'][1])
-            total_lora_params += lora_p
-            total_lora_flops += item['lora_flops_per_token']
+            # lora_p = (item['A_shape'][0] * item['A_shape'][1]) + \
+            #          (item['B_shape'][0] * item['B_shape'][1])
+            # total_lora_params += lora_p
+            # total_lora_flops += item['lora_flops_per_token']
 
     # 3. Apply Sparsity
     # We only prune the base model, not the LoRA adapters
-    retained_base_params = b * total_base_params * (1 - sparsity_ratio)
-    retained_base_flops = b * total_base_flops * (1 - sparsity_ratio)
+    # retained_base_params = b * total_base_params * (1 - sparsity_ratio)
+    # retained_base_flops = b * total_base_flops * (1 - sparsity_ratio)
 
     # 4. Final Totals
-    final_params = retained_base_params + total_lora_params
-    final_flops = retained_base_flops + total_lora_flops
-    final_bits = final_params * bit_precision
+    # final_params = retained_base_params + total_lora_params
+    # final_flops = retained_base_flops + total_lora_flops
+    # final_bits = final_params * bit_precision
 
-    print(f"-- Results for Sparsity {sparsity_ratio} ---")
-    print(f"Original Base Params: {total_base_params:,}")
-    print(f"Retained Base Params: {int(retained_base_params):,}")
-    print(f"LoRA Params (Added): {total_lora_params:,}")
-    print(f"TOTAL Retained Params: {int(final_params):,}")
-    print(f"TOTAL Model Bits: {int(final_bits):,} bits")
-    print(f'TOTAL Retained FLOPs: {int(final_flops):,}')
+    # print(f"-- Results for Sparsity {sparsity_ratio} ---")
+    # print(f"Original Base Params: {total_base_params:,}")
+    # print(f"Retained Base Params: {int(retained_base_params):,}")
+    # print(f"LoRA Params (Added): {total_lora_params:,}")
+    # print(f"TOTAL Retained Params: {int(final_params):,}")
+    # print(f"TOTAL Model Bits: {int(final_bits):,} bits")
+    # print(f'TOTAL Retained FLOPs: {int(final_flops):,}')
 
     return retained_base_params
 
@@ -82,39 +86,44 @@ def set_seed(seed: int):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
-def get_rho_l(b, lambda_value, expert_count, eta, layer_quality, k):
-    value = (b - lambda_value) * expert_count / (2 * eta * layer_quality**k)
+def get_rho_l(b, lambda_value, layer_params, eta, layer_quality, k):
+    value = (b - lambda_value) * layer_params / (2 * eta * layer_quality**k)
     return min(1.0, max(0.0, value))
 
-def prune(experts_per_layer, b, eta, layer_qualities, k, sparsity, epsilon=0.1):
+def prune(n_l, b, eta, layer_qualities, k, sparsity, epsilon=0.1):
     checksum = 0.0
     lambda_value = 0.0
-    rho_l = [0.0] * len(experts_per_layer)
-    for layer in range(len(experts_per_layer)):
+    rho_l = [0.0] * len(n_l)
+    for layer in range(len(n_l)):
         rho_l[layer] = get_rho_l(b, lambda_value, 
-                                experts_per_layer[layer],
+                                n_l[layer],
                                 eta, layer_qualities[layer],
                                 k)
-        checksum += experts_per_layer[layer] * rho_l[layer]
+        checksum += n_l[layer] * rho_l[layer]
     
     print(f'initial checksum: {checksum}')
+    
     if checksum >= sparsity:
         return lambda_value, rho_l
     else:
+        
         def get_G(temp_lambda):
             value = 0.0
-            for layer in range(len(experts_per_layer)):
-                value += get_rho_l(b, temp_lambda, 
-                                experts_per_layer[layer],
-                                eta, layer_qualities[layer],
-                                k)
+            for layer in range(len(n_l)):
+                value += n_l[layer] * get_rho_l(b, temp_lambda, 
+                                                n_l[layer],
+                                                eta, layer_qualities[layer],
+                                                k)
+            
             value -= sparsity
+            # print(f"sum n_l*rho_l: {value}, sparsity: {sparsity}")
             return value
 
         lambda_min = -1.0
         lambda_max = 1.0
         t = 1
         while get_G(lambda_min) < 0:
+            print(f"G({lambda_min}): {get_G(lambda_min)}")
             lambda_min = -1.0 * (1 + math.exp(1))**t
             t += 1
         print(f"lambda_min: {lambda_min}, t: {t}")
@@ -124,20 +133,22 @@ def prune(experts_per_layer, b, eta, layer_qualities, k, sparsity, epsilon=0.1):
             t += 1
         print(f"lambda_max: {lambda_max}, t: {t}")
         lambda_value = (lambda_min + lambda_max) / 2.0
-        g_lambda = abs(get_G(lambda_value))
+        g_lambda = get_G(lambda_value)
         print(f"g(lambda): {g_lambda}, epsilon: {epsilon}")
-        while g_lambda > epsilon:
-            print(f"g(lambda): {g_lambda}, epsilon: {epsilon}")
+        while abs(g_lambda) > epsilon:
+            # print(f"g(lambda): {g_lambda}, epsilon: {epsilon}")
+            lambda_value = (lambda_min + lambda_max) / 2.0
+            g_lambda = get_G(lambda_value)
             if g_lambda > 0:
                 lambda_min = lambda_value
             else:
                 lambda_max = lambda_value
-            lambda_value = (lambda_min + lambda_max) / 2.0
+            
             g_lambda = abs(get_G(lambda_value))
         print(f"lambda_value: {lambda_value}, g(lambda): {g_lambda}")
-        for layer in range(len(experts_per_layer)):
+        for layer in range(len(n_l)):
             rho_l[layer] = get_rho_l(b, lambda_value, 
-                                experts_per_layer[layer],
+                                n_l[layer],
                                 eta, layer_qualities[layer],
                                 k)
         print(f"rho_l:")
@@ -162,12 +173,14 @@ if __name__ == '__main__':
     model_metadata = '/data/mdl-layerIF/Expert_Allocation/layerIF_outputs/mistral_mola_46810_224_glue_cola_all/mola_lora_summary.json'
     # retained_base_params = calculate_retained_metrics(model_metadata, sparsity_ratio=0.3)
 
-    lambda_value, rho_l = prune(experts_per_layer, 
+    connections_per_layer = util.get_all_layer_connections(model_metadata)
+    print(f"connection_per_layer: {connections_per_layer}")
+    sparsity_target = sum(connections_per_layer) * 0.4
+    lambda_value, rho_l = prune(n_l=connections_per_layer,
                                 b=args.bits,
                                 eta=args.eta, 
                                 layer_qualities=util.get_IF(), 
                                 k=1, 
-                                sparsity=0.4, 
-                                epsilon=0.3)
-
+                                sparsity=sparsity_target, 
+                                epsilon=0.2)
 
