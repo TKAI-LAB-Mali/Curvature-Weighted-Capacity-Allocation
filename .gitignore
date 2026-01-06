@@ -1,4 +1,9 @@
 share/
+LayerIF_Pruning_Old
+*/llm_weights/*
+*.pkl
+*.npy
+*.yml
 *.txt
 *prompt*
 share/
