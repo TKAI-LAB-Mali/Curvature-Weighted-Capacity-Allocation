@@ -5,7 +5,7 @@
 
 ## Expert Allocation - (log utility)
 1. Get number of experts with [Expert_Allocation/expert_number.py](Expert_Allocation/expert_number.py). Follow [Expert_Allocation/README.md](Expert_Allocation/README.md)
-2. Obtaining number of experts based on layerIF - [Expert_Allocation/layerIF_Computation/compute_IF.py](Expert_Allocation/layerIF_Computation/compute_IF.py)
+2. Obtaining number of experts based on layerIF - [Expert_Allocation/layerIF_Computation/compute_IF.py](Expert_Allocation/layerIF_Computation/compute_IF.py). After this, run [Expert_Allocation/layerIF_Computation/expert_allocator.ipynb](Expert_Allocation/layerIF_Computation/expert_allocator.ipynb)
 3. Obtain number of experts based on MDL - [mdl/logUtility.py](mdl/logUtility.py)
 4. Train with number of experts - [Expert_Allocation/run_all.sh](Expert_Allocation/run_all.sh) or [Expert_Allocation/run_all_mola.sh](Expert_Allocation/run_all_mola.sh)
 5. Evaluate on datasets - [Expert_Allocation/eval_all.sh](Expert_Allocation/eval_all.sh)
