@@ -1,0 +1,4 @@
+  File "/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/./compute_if.log", line 1
+    Model deleted. GPU memory allocated: 4.04 GB
+          ^^^^^^^
+SyntaxError: invalid syntax
