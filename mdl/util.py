@@ -6,12 +6,12 @@ import os
 import pickle as pkl
 import numpy as np
 
-def get_IF():
-    path = '/data/mdl-layerIF/Expert_Allocation/layerIF_Computation/outputs/layerIF_values/mistral-7B'
+def get_IF(experts_path, dataset):
+    # path = '/data/mdl-layerIF/Expert_Allocation/layerIF_Computation/outputs/layerIF_values/mistral-7B-v0.1'
     layer_IFs = []
-    for file in sorted(os.listdir(path)):
-        if file.endswith('pkl'):
-            results = pkl.load(open(os.path.join(path, file), 'rb'))
+    for file in sorted(os.listdir(experts_path)):
+        if file.endswith(dataset + '.pkl'):
+            results = pkl.load(open(os.path.join(experts_path, file), 'rb'))
             layerIF_value = results['influence']['proposed'].to_numpy()
             layer_IFs.append(-1.0*np.sum(layerIF_value))
     return layer_IFs

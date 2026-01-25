@@ -72,7 +72,7 @@ def tokenize_function(examples, tokenizer, max_seq_length):
 
 def get_el(layer_quality, c_l, lambda_value=1, beta=2, alpha=0.5, gamma=0.9):
     value = gamma * layer_quality**beta / (alpha + lambda_value * c_l)
-    return max(value - 1.0, 0.0)
+    return max(value, 1.0)
 
 def logUtility(budget: int, layer_quality: list):
     cost = 0
@@ -104,18 +104,17 @@ def logUtility(budget: int, layer_quality: list):
         while get_g(lambda_ub) > 0:
             lambda_ub = lambda_ub_init * (1.0 + math.exp(1))**t
             t += 1
-        print(f"g(lambda_lb): {get_g(lambda_lb)}")
-        print(f"g(lambda_ub): {get_g(lambda_ub)}")
+        # print(f"g(lambda_lb): {get_g(lambda_lb)}")
+        # print(f"g(lambda_ub): {get_g(lambda_ub)}")
 
         epsilon = 0.1
         lambda_avg = (lambda_lb + lambda_ub) / 2.0
         g_val = get_g(lambda_avg)
-        print(f"lambda_avg: {lambda_avg}, g_val: {g_val}, epsilon: {epsilon}")
-        print(f"initial abs(g_val): {abs(g_val)}")
+        # print(f"lambda_avg: {lambda_avg}, g_val: {g_val}, epsilon: {epsilon}")
+        # print(f"initial abs(g_val): {abs(g_val)}")
         while abs(g_val) > epsilon:
             lambda_avg = (lambda_lb + lambda_ub) / 2.0
             g_val = get_g(lambda_avg)
-            print(f"abs(g_val): {abs(g_val)}")
             if g_val > 0:
                 lambda_lb = lambda_avg
             else:
@@ -135,33 +134,44 @@ def main():
     parser.add_argument('--save', type=str, default=None, help='Path to save results')
     parser.add_argument('--save_model', type=str, default=None, help='Path to save the model')
     
-    experts_path = '../Expert_Allocation/layerIF_Computation/outputs/layerIF_values/mistral-7B'
-    flops_paths = "../Expert_Allocation/layerIF_outputs/mistral_mola_46810_224_glue_cola_all"
-
-    per_layer_base_flops, per_layer_lora_flops_scaled = get_flops(flops_paths)
+    experts_path = '/data/mdl-layerIF/Expert_Allocation/layerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1'
+    output_folder = '/data/mdl-layerIF/Expert_Allocation/layerIF_outputs/'
+    data_paths = {
+        '_cola': 'mistral_mola_46810_224_glue_cola_all',
+        'mrpc': 'mistral_mola_46810_224_glue_mrpc_all',
+        'commonq': 'mistral_mola_46810_224_qa_commonq_all',
+        'openbook': 'mistral_mola_46810_224_qa_openbook_all',
+        'text_science_q_rebuttal': "mistral_mola_46810_224_qa_text_scienceq_all"}
 
     # Program flow:
     # step 1 - implement Expert_Allocation/layerIF_Computation/compute_IF.py to obtain the IF scores for LLM (mention model name).
     # step 2 - implement expert_allocator.ipynb with the IF scores calculated in the previous step. This will give us the number of experts per layer.
     # step 3 - run this file to obtain MDL based function (Alg-1, log-utility in the draft) number of experts per layer
 
-    layerIFs = util.get_IF()
-    budget = 160 #8 * len(layerIFs)
-    # layer_quality = [math.sqrt(value) for value in layerIFs]
-    lambda_avg, e_l = logUtility(budget, layer_quality=layerIFs)
-    print(f"lambda_avg: {lambda_avg}, sum(e_l): {sum(e_l)}")
-    print(f"original e_l: {e_l}")
-    e_l = np.array([int(round(x)) for x in e_l])
-    print(f"rounded e_l: {e_l}")
-    print(f"sum(e_l): {sum(e_l)}, budget:{budget}")
+    for key, value in data_paths.items():
+        path = os.path.join(output_folder, value)
+        print(f"path: {path}")
+        per_layer_base_flops, per_layer_lora_flops_scaled = get_flops(path)
 
-    # number of experts per layer obtained from Hadi's code
-    layerIF_experts = np.array([1, 11, 9, 7, 8, 9, 9, 7, 8, 8, 8, 7, 6, 8, 6, 4, 7, 3, 3, 3, 4, 4, 3, 2, 5, 2, 1, 2, 1, 2, 1, 1])
+        layerIFs = util.get_IF(experts_path, dataset=key)
+        budget = 160 #8 * len(layerIFs)
+        # layer_quality = [math.sqrt(value) for value in layerIFs]
+        lambda_avg, e_l = logUtility(budget, layer_quality=layerIFs)
+        # print(f"lambda_avg: {lambda_avg}, sum(e_l): {sum(e_l)}")
+        # print(f"original e_l: {e_l}")
+        e_l = [max(1, math.floor(x)) for x in e_l]
+        print(f'exp_number_experts="{",".join(map(str, e_l))}"')
+        top_k = [2 if e>1 else 1 for e in e_l]
+        print(f'exp_top_k="{",".join(map(str, top_k))}"\n')
+        
+
+    # # number of experts per layer obtained from Hadi's code
+    # layerIF_experts = np.array([1,1,1,1,2,2,4,6,4,6,6,6,6,6,7,7,7,7,6,3,7,6,6,5,5,6,7,6,5,6,7,5])
     
-    # check the difference between our number of experts and Hadi's values
-    assert len(e_l) == len(layerIF_experts)
-    error = np.sqrt(np.sum((layerIF_experts - e_l)**2) / len(e_l))
-    print(f"L2 error between MDL and layerIF prediction of experts: {error}")
+    # # check the difference between our number of experts and Hadi's values
+    # assert len(e_l) == len(layerIF_experts)
+    # error = np.sqrt(np.sum((layerIF_experts - e_l)**2) / len(e_l))
+    # print(f"L2 error between MDL and layerIF prediction of experts: {error}")
 
 if __name__ == '__main__':
     main()
