@@ -30,3 +30,33 @@ rho = 0.25        # try 0.1, 0.25, 0.5
 
 # Budget --> This will give us budget
 B = rho * np.sum(c)
+
+
+# Below is proxy if using standard lora, which doesn't contain flops etc information
+
+def compute_c_l_from_lora(
+    model_config,
+    lora_rank: int,
+    lora_modules=("q_proj", "k_proj", "v_proj", "o_proj")
+):
+    d_model = model_config.hidden_size
+    d_ff = model_config.intermediate_size
+    num_layers = model_config.num_hidden_layers
+
+    c_l = []
+
+    for _ in range(num_layers):
+        layer_cost = 0
+
+        for module in lora_modules:
+            if module in ["q_proj", "k_proj", "v_proj", "o_proj"]:
+                d_in = d_out = d_model
+            else:  # MLP projections if any, I assume it will have but still
+                d_in = d_model
+                d_out = d_ff
+
+            layer_cost += 2 * lora_rank * (d_in + d_out)
+
+        c_l.append(layer_cost)
+
+    return np.array(c_l)
