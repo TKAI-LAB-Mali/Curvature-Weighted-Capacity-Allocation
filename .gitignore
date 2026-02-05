@@ -1,5 +1,6 @@
 Expert_Allocation/results
 Expert_Allocation/datasets
+Expert_Allocation/LayerIF_Pruning_New/outputs/
 */__pycache__*
 share/
 LayerIF_Pruning_Old
