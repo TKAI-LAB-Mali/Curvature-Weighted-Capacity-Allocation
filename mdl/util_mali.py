@@ -6,7 +6,7 @@ import numpy as np
 def get_IF(
     experts_path: str,
     dataset: str,
-    positive: bool = False,
+    choice: str,               # 'pos', 'neg', 'all'
     agg: str = "sum",          # "sum" or "mean"
     tau_frac: float = 0.05,    # prior strength (0.0 disables prior)
     eps: float = 1e-12
@@ -31,14 +31,26 @@ def get_IF(
 
             x = results["influence"]["proposed"].to_numpy()
 
+
             # Aggregate within this layer file
             # NOTE: do NOT keep only positives; do NOT invert.
+            
             if agg == "mean":
-                layer_score = float(np.mean(x))
-            else:
-                layer_score = float(np.sum(x))
-
-            layer_IFs.append(layer_score)
+                aggregated_score = np.mean(x, axis=0, 
+                                           keepdims=True)
+            elif agg == 'sum':
+                aggregated_score = np.sum(x, axis=0, 
+                                          keepdims=True)
+                
+            if choice == 'pos':
+                aggregated_score = np.sum(aggregated_score[
+                                                np.where(aggregated_score>=0)
+                                                ])
+            elif choice == 'neg':
+                aggregated_score = np.sum(aggregated_score[
+                                                np.where(aggregated_score<0)
+                                                ])
+            layer_IFs.append(aggregated_score)
 
     layer_IFs = np.array(layer_IFs, dtype=float)
 

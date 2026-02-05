@@ -12,25 +12,37 @@ def load_lora_costs(mola_path):
     per_layer = summary["per_layer"]
 
     c_l = []
+    b_l = []
+    
     for layer_idx in sorted(per_layer.keys(), key=int):
+        visited = []
         layer_cost = 0.0
+        layer_base_budget = 0.0
+        # for item in per_layer[layer_idx]:
+        #     layer_cost += item["lora_flops_per_token_scaled"]
         for item in per_layer[layer_idx]:
-            layer_cost += item["lora_flops_per_token_scaled"]
+            weight_name = item['module'].split('.')[-1]
+            if weight_name not in visited:
+                layer_cost += item['lora_flops_per_token_scaled']
+                layer_base_budget += item['base_flops_per_token']
+                visited.append(weight_name)
         c_l.append(layer_cost)
+        b_l.append(layer_base_budget)
 
-    return np.array(c_l)
+
+    return c_l, np.sum(b_l)
 
 # Now to use do this Theo and/or Hitesh, in your logutility main function
-flops_path = "/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/mola_IF_experts_output/mola_lora_summary.json"
+# flops_path = "/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/mola_IF_experts_output"
 
-# Load per-layer LoRA costs --> You get this from that json file, I assume it gives values 
-c = load_lora_costs(flops_path)
+# # Load per-layer LoRA costs --> You get this from that json file, I assume it gives values 
+# c, B = load_lora_costs(flops_path)
 
-# Capacity ratio (MDL knob) -- Just a hyperparameter
-rho = 0.25        # try 0.1, 0.25, 0.5
-
-# Budget --> This will give us budget
-B = rho * np.sum(c)
+# # Capacity ratio (MDL knob) -- Just a hyperparameter
+# rho = 0.25        # try 0.1, 0.25, 0.5
+# print(f"c: {c}")
+# # Budget --> This will give us budget
+# B = rho * np.sum(c)
 
 
 # Below is proxy if using standard lora, which doesn't contain flops etc information
