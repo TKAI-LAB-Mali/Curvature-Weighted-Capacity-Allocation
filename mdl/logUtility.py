@@ -152,6 +152,7 @@ def main():
 
     args = parser.parse_args()
     
+    print(f"IF choice: {args.choice}")
     experts_path = '/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1'
     output_folder = '/data/mdl-layerIF/Expert_Allocation/layerIF_outputs/'
     data_paths = {
@@ -178,11 +179,13 @@ def main():
         layerIFs = util_mali.get_IF(experts_path=experts_path,
                                     dataset=key,
                                     choice=args.choice)
+        print(f"layerIFs: {layerIFs}")
         c, B = get_B.load_lora_costs(path)
         
-        # cola - rho = 0.024
+        # cola - rho = 0.0245
+        # openbook - rho = 0.028 (-ve IFs)
         # others - rho = 0.0275
-        budget = 0.0275 * B 
+        budget = 0.0276 * B 
         # budget = 160 * sum(c)     
         
         

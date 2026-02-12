@@ -12,6 +12,8 @@ import json
 import math
 import torch
 import util
+import util_mali
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 def calculate_retained_metrics(json_file, sparsity_ratio=0.3, b=16,
                                 bit_precision=16):
@@ -88,7 +90,7 @@ def set_seed(seed: int):
 
 def get_rho_l(b, lambda_value, layer_params, eta, layer_quality, k):
     value = (b - lambda_value) * layer_params / (2 * eta * layer_quality**k)
-    return min(1.0, max(0.0, value))
+    return min(0.55, max(0.0, value))
 
 def prune(n_l, b, eta, layer_qualities, k, sparsity, epsilon=0.1):
     checksum = 0.0
@@ -101,7 +103,7 @@ def prune(n_l, b, eta, layer_qualities, k, sparsity, epsilon=0.1):
                                 k)
         checksum += n_l[layer] * rho_l[layer]
     
-    print(f'initial checksum: {checksum}')
+    # print(f'initial checksum: {checksum}')
     
     if checksum >= sparsity:
         return lambda_value, rho_l
@@ -115,26 +117,28 @@ def prune(n_l, b, eta, layer_qualities, k, sparsity, epsilon=0.1):
                                                 eta, layer_qualities[layer],
                                                 k)
             
-            value -= sparsity
-            # print(f"sum n_l*rho_l: {value}, sparsity: {sparsity}")
-            return value
-
-        lambda_min = -1.0
+            # value -= sparsity
+            return float(value-sparsity)
+        
+        lambda_min_init = -100.0
+        lambda_max_init = 1.0
+        lambda_min = 0
         lambda_max = 1.0
         t = 1
-        while get_G(lambda_min) < 0:
-            print(f"G({lambda_min}): {get_G(lambda_min)}")
-            lambda_min = -1.0 * (1 + math.exp(1))**t
+        # print(f"G({lambda_min}): {get_G(lambda_min)}")
+        while get_G(lambda_min) < 0:            
+            lambda_min = lambda_min_init * (1 + math.exp(1))**t
             t += 1
-        print(f"lambda_min: {lambda_min}, t: {t}")
+            
+        # print(f"lambda_min: {lambda_min}, t: {t}")
         t = 1
         while get_G(lambda_max) > 0:
-            lambda_max = 1.0 * (1 + math.exp(1))**t
+            lambda_max = lambda_max_init * (1 + math.exp(1))**t
             t += 1
-        print(f"lambda_max: {lambda_max}, t: {t}")
+        # print(f"lambda_max: {lambda_max}, t: {t}")
         lambda_value = (lambda_min + lambda_max) / 2.0
         g_lambda = get_G(lambda_value)
-        print(f"g(lambda): {g_lambda}, epsilon: {epsilon}")
+        # print(f"g(lambda): {g_lambda}, epsilon: {epsilon}")
         while abs(g_lambda) > epsilon:
             # print(f"g(lambda): {g_lambda}, epsilon: {epsilon}")
             lambda_value = (lambda_min + lambda_max) / 2.0
@@ -144,22 +148,38 @@ def prune(n_l, b, eta, layer_qualities, k, sparsity, epsilon=0.1):
             else:
                 lambda_max = lambda_value
             
-            g_lambda = abs(get_G(lambda_value))
-        print(f"lambda_value: {lambda_value}, g(lambda): {g_lambda}")
+            g_lambda = get_G(lambda_value)
+        # print(f"lambda_value: {lambda_value}, g(lambda): {g_lambda}")
         for layer in range(len(n_l)):
             rho_l[layer] = get_rho_l(b, lambda_value, 
                                 n_l[layer],
                                 eta, layer_qualities[layer],
                                 k)
         print(f"rho_l:")
-        print(rho_l)
+        rounded_rho = [float(round(num, 4)) for num in rho_l]
+        print(rounded_rho)
+        print(f"mean of rho_l: {np.mean(rho_l)}, rounded rho_l: {np.mean(rounded_rho)}")
         return lambda_value, rho_l
+    
+def get_llm(model, cache_dir="llm_weights"):
+    model = AutoModelForCausalLM.from_pretrained(
+        model,
+        torch_dtype = torch.float16,
+        cache_dir = cache_dir,
+        low_cpu_mem_usage=True,
+        device_map = "auto"
+    )
+    
+    model.seqlen = 2048
+    return model
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default="mistralai/Mistral-7B-v0.1", type=str)
+    parser.add_argument('--cache_dir', default='/data/mdl-layerIF/LayerIF_Pruning_New/llm_weights', type=str)
+    parser.add_argument('--sparsity_ratio', default=0.5, type=float)
     parser.add_argument('--bits', '-b', default=16, type=int, help='number of bits per weight value')
-    parser.add_argument('--eta', type=float, default=0.1, help='eta in objective function')
+    parser.add_argument('--eta', type=float, default=0.5, help='eta in objective function')
     parser.add_argument('--rho', type=float, default=0.3, help='rho is sparsity level in a layer')
     parser.add_argument('--seed', type=int, default=0, help='Seed for sampling the calibration data')
     parser.add_argument('--save', type=str, default=None, help='Path to save results')
@@ -172,15 +192,29 @@ if __name__ == '__main__':
 
     model_metadata = '/data/mdl-layerIF/Expert_Allocation/layerIF_outputs/mistral_mola_46810_224_glue_cola_all/mola_lora_summary.json'
     # retained_base_params = calculate_retained_metrics(model_metadata, sparsity_ratio=0.3)
+    experts_path = '/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1'
+    data_paths = [ 'mrpc', 'commonq', 'openbook', 'text_science_q_rebuttal'] #'_cola',
+    
+    for data in data_paths:
+        if_values = util_mali.get_IF(experts_path, data,choice='all')
+        # connections_per_layer = util.get_all_layer_connections(model_metadata)
 
-    connections_per_layer = util.get_all_layer_connections(model_metadata)
-    print(f"connection_per_layer: {connections_per_layer}")
-    sparsity_target = sum(connections_per_layer) * 0.4
-    lambda_value, rho_l = prune(n_l=connections_per_layer,
-                                b=args.bits,
-                                eta=args.eta, 
-                                layer_qualities=util.get_IF(), 
-                                k=1, 
-                                sparsity=sparsity_target, 
-                                epsilon=0.2)
+        model = get_llm(args.model, args.cache_dir)
+        layerwise_param_count = util.get_layer_param_count(model)
+        
+        # sparsity_target = (sum(connections_per_layer)) * 0.5 # Add 8192 parameters of normalization in every layer of Mistral-7B
+        
+        sparsity_target = (sum(layerwise_param_count)) * args.sparsity_ratio
+        print(f"sparsity_target: {sparsity_target}")
 
+        lambda_value, rho_l = prune(n_l=layerwise_param_count,
+                                    b=args.bits,
+                                    eta=2, 
+                                    layer_qualities=if_values,    #util.get_IF(), 
+                                    k=1, 
+                                    sparsity=sparsity_target, 
+                                    epsilon=0.1)
+
+        os.makedirs('./data/', exist_ok=True)
+        with open(f'./data/layerwise_mdl_prune_ratios-{data}.json', 'w') as f:
+            json.dump(rho_l, f)

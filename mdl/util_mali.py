@@ -50,6 +50,9 @@ def get_IF(
                 aggregated_score = np.sum(aggregated_score[
                                                 np.where(aggregated_score<0)
                                                 ])
+            elif choice == 'all':
+                aggregated_score = np.sum(aggregated_score)
+                
             layer_IFs.append(aggregated_score)
 
     layer_IFs = np.array(layer_IFs, dtype=float)
