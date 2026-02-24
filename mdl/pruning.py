@@ -90,7 +90,7 @@ def set_seed(seed: int):
 
 def get_rho_l(b, lambda_value, layer_params, eta, layer_quality, k):
     value = (b - lambda_value) * layer_params / (2 * eta * layer_quality**k)
-    return min(0.55, max(0.0, value))
+    return min(0.51, max(0.0, value))
 
 def prune(n_l, b, eta, layer_qualities, k, sparsity, epsilon=0.1):
     checksum = 0.0
@@ -193,9 +193,10 @@ if __name__ == '__main__':
     model_metadata = '/data/mdl-layerIF/Expert_Allocation/layerIF_outputs/mistral_mola_46810_224_glue_cola_all/mola_lora_summary.json'
     # retained_base_params = calculate_retained_metrics(model_metadata, sparsity_ratio=0.3)
     experts_path = '/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1'
-    data_paths = [ 'mrpc', 'commonq', 'openbook', 'text_science_q_rebuttal'] #'_cola',
+    data_paths = ['cola', 'mrpc', 'commonq', 'openbook', 'text_science_q_rebuttal']
     
     for data in data_paths:
+        print(f"Data: {data}")
         if_values = util_mali.get_IF(experts_path, data,choice='all')
         # connections_per_layer = util.get_all_layer_connections(model_metadata)
 
@@ -216,5 +217,6 @@ if __name__ == '__main__':
                                     epsilon=0.1)
 
         os.makedirs('./data/', exist_ok=True)
-        with open(f'./data/layerwise_mdl_prune_ratios-{data}.json', 'w') as f:
+        with open(f'./data/prune_ub-0.51-{data}.json', 'w') as f:
             json.dump(rho_l, f)
+        print(f"*"*50)
