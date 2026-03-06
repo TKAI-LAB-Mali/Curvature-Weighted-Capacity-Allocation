@@ -1,0 +1,11 @@
+__pycache__
+mistral_**
+gemma_**
+results/
+backup**
+DataInf/
+evaluation_backup**
+
+# EXCEPTIONS (negated patterns)
+!gemma_config.py
+!mistral_model.py
