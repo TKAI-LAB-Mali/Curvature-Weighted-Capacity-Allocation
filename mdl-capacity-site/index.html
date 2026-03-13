@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Curvature-Weighted Capacity Allocation | Research Overview</title>
+  <meta name="description" content="High-level overview of the MDL-based curvature-weighted capacity allocation and pruning framework for large language model optimization." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <header class="topbar">
+    <div class="brand">MDL Capacity Framework</div>
+    <nav>
+      <a href="#paper">Paper</a>
+      <a href="#abstract">Abstract</a>
+      <a href="#method">Method</a>
+      <a href="#figures">Figures</a>
+      <a href="#results">Results</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="kicker">Research Paper Overview</p>
+      <h1>Curvature-Weighted Capacity Allocation for Layer-Adaptive LLM Optimization</h1>
+      <p class="lead">
+        A Minimum Description Length (MDL) framework that allocates and prunes capacity across layers using curvature-adjusted gains,
+        with closed-form solutions and efficient bisection-based optimization.
+      </p>
+      <div class="hero-metrics">
+        <div>
+          <span class="metric">\(\mathcal{O}(K\log(1/\varepsilon))\)</span>
+          <small>solver complexity</small>
+        </div>
+        <div>
+          <span class="metric">2 convex programs</span>
+          <small>allocation + pruning</small>
+        </div>
+        <div>
+          <span class="metric">\(\mathcal{O}(\delta^2)\)</span>
+          <small>transfer regret bound</small>
+        </div>
+      </div>
+    </section>
+
+    <section id="paper" class="panel split paper-authors">
+      <div>
+        <h2>Paper Link</h2>
+        <p>
+          arXiv page:
+          <a class="paper-link" href="https://arxiv.org/html/2603.00910v1" target="_blank" rel="noopener noreferrer">
+            https://arxiv.org/html/2603.00910v1
+          </a>
+        </p>
+        <p class="meta-note">Status: Submitted to UAI 2026.</p>
+      </div>
+      <div>
+        <h2>Authors</h2>
+        <ul class="author-list">
+          <li><strong>Theophilus Amaefuna*</strong> — <a href="mailto:ikennaamaefuna@usf.edu">ikennaamaefuna@usf.edu</a></li>
+          <li><strong>Hitesh Vaidya*</strong> — <a href="mailto:hvaidya@usf.edu">hvaidya@usf.edu</a></li>
+          <li><strong>Anshuman Chhabra</strong> — <a href="mailto:anshumanc@usf.edu">anshumanc@usf.edu</a></li>
+          <li><strong>Ankur Mali</strong> — <a href="mailto:ankurarjunmali@usf.edu">ankurarjunmali@usf.edu</a></li>
+        </ul>
+        <p class="meta-note">Affiliation: Bellini College of Artificial Intelligence, Cybersecurity and Computing, University of South Florida, Tampa.</p>
+        <p class="meta-note">Equal contribution: Theophilus Amaefuna and Hitesh Vaidya.</p>
+      </div>
+    </section>
+
+    <section id="abstract" class="panel">
+      <h2>Abstract</h2>
+      <p>
+        Layer-wise capacity in large language models is highly non-uniform: some layers contribute disproportionately to loss reduction while others are near-redundant. Existing methods for exploiting this non-uniformity provide sensitivity estimates but no principled mechanism for allocation or pruning under hardware constraints. We address this gap with a unified, curvature-aware MDL framework. Our central quantity is the curvature-adjusted layer gain \(\zeta_k^2 = g_k^\top \widetilde{H}_{kk}^{-1} g_k\), which equals twice the maximal second-order reduction in empirical risk achievable by updating layer \(k\) alone. Normalized quality scores then drive two convex MDL programs for allocation and pruning. Both admit unique closed-form solutions parameterized by a single dual variable, computable in \(\mathcal{O}(K\log(1/\varepsilon))\) via bisection. We further prove an \(\mathcal{O}(\delta^2)\) transfer regret bound when curvature scores drift across domains.
+      </p>
+    </section>
+
+    <section id="method" class="panel split">
+      <div>
+        <h2>Method at a Glance</h2>
+        <ol>
+          <li>Estimate per-layer curvature-adjusted gain using gradient and regularized Hessian blocks.</li>
+            <li>Normalize gains into quality scores \(q_k\).</li>
+            <li>Solve allocation program to distribute added capacity under budget \(B\).</li>
+            <li>Solve pruning program to meet sparsity target \(S\) while preserving high-gain layers.</li>
+          <li>Transfer decisions across domains with bounded regret when scores drift.</li>
+        </ol>
+      </div>
+      <figure class="infographic">
+        <object data="../UAI_2026-2/figures/workflow.pdf" type="application/pdf" class="workflow-pdf">
+          <p>Preview unavailable. Open: <a href="../UAI_2026-2/figures/workflow.pdf">workflow.pdf</a></p>
+        </object>
+        <figcaption>Framework workflow diagram (from paper Figure 1).</figcaption>
+      </figure>
+    </section>
+
+    <section id="figures" class="panel">
+      <h2>Paper Figures</h2>
+      <p class="note">These are sourced from the project paper assets.</p>
+      <div class="figure-grid">
+        <article>
+          <h3>Workflow Figure</h3>
+          <object data="../UAI_2026-2/figures/workflow.pdf" type="application/pdf" class="pdf-frame">
+            <p>Preview unavailable. Open: <a href="../UAI_2026-2/figures/workflow.pdf">workflow.pdf</a></p>
+          </object>
+        </article>
+        <article>
+          <h3>Mistral Expert Allocation</h3>
+          <object data="../UAI_2026-2/figures/mistral_expert_alloc.pdf" type="application/pdf" class="pdf-frame">
+            <p>Preview unavailable. Open: <a href="../UAI_2026-2/figures/mistral_expert_alloc.pdf">mistral_expert_alloc.pdf</a></p>
+          </object>
+        </article>
+        <article>
+          <h3>Gemma Expert Allocation</h3>
+          <object data="../UAI_2026-2/figures/gemma_expert_alloc.pdf" type="application/pdf" class="pdf-frame">
+            <p>Preview unavailable. Open: <a href="../UAI_2026-2/figures/gemma_expert_alloc.pdf">gemma_expert_alloc.pdf</a></p>
+          </object>
+        </article>
+      </div>
+    </section>
+
+    <section id="results" class="panel">
+      <h2>Benchmark Highlights</h2>
+      <div class="results-cards">
+        <div class="result-card">
+          <h3>Mistral-7B Expert Allocation (Average Accuracy)</h3>
+          <p><strong>All:</strong> LayerIF 80.41 vs MDL 83.07</p>
+          <p><strong>+ve:</strong> LayerIF 83.39 vs MDL 84.06</p>
+        </div>
+        <div class="result-card">
+          <h3>Gemma-7B Expert Allocation (Average Accuracy)</h3>
+          <p><strong>+ve:</strong> LayerIF 87.46 vs MDL 87.52</p>
+        </div>
+        <div class="result-card">
+          <h3>Mistral-7B Pruning — SparseGPT (50% Sparsity)</h3>
+          <p><strong>MDL avg:</strong> 60.18% &nbsp;|&nbsp; <strong>LayerIF avg:</strong> 60.18%</p>
+          <p>MDL matches LayerIF with principled convex program.</p>
+        </div>
+        <div class="result-card">
+          <h3>Gemma-7B Pruning — Magnitude (50% Sparsity)</h3>
+          <p><strong>MDL avg:</strong> 33.34% &nbsp;|&nbsp; <strong>LayerIF avg:</strong> 32.91%</p>
+          <p>MDL outperforms LayerIF under Magnitude pruning.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <h3>Mistral-7B Expert Allocation (%)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Dataset</th>
+              <th>LayerIF (All)</th>
+              <th>MDL (All)</th>
+              <th>LayerIF (+ve)</th>
+              <th>MDL (+ve)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>CoLA</td><td>85.62</td><td>87.44</td><td>86.10</td><td>85.90</td></tr>
+            <tr><td>MRPC</td><td>83.59</td><td>82.72</td><td>82.84</td><td>84.23</td></tr>
+            <tr><td>CommonsenseQA</td><td>81.24</td><td>80.43</td><td>81.40</td><td>80.18</td></tr>
+            <tr><td>OpenBookQA</td><td>85.20</td><td>85.00</td><td>85.80</td><td>86.40</td></tr>
+            <tr><td>ScienceQA</td><td>66.41</td><td>79.77</td><td>80.80</td><td>83.59</td></tr>
+            <tr class="avg"><td>Average</td><td>80.41</td><td>83.07</td><td>83.39</td><td>84.06</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap">
+        <h3>Gemma-7B Expert Allocation (%)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Dataset</th>
+              <th>LayerIF</th>
+              <th>MDL (+ve)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>CoLA</td><td>87.15</td><td>87.34</td></tr>
+            <tr><td>MRPC</td><td>84.41</td><td>84.99</td></tr>
+            <tr><td>CommonsenseQA</td><td>82.64</td><td>81.57</td></tr>
+            <tr><td>OpenBookQA</td><td>88.40</td><td>88.80</td></tr>
+            <tr><td>ScienceQA</td><td>94.69</td><td>94.92</td></tr>
+            <tr class="avg"><td>Average</td><td>87.46</td><td>87.52</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap">
+        <h3>Mistral-7B Pruning — 50% Sparsity, Mean Zero-Shot Accuracy (%)</h3>
+        <p class="note">Layer cap 0.51. Rows show calibration dataset used to compute influence scores.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Calibration Dataset</th>
+              <th>Magnitude</th>
+              <th>Wanda</th>
+              <th>SparseGPT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>CoLA</td><td>56.47</td><td>58.59</td><td>59.66</td></tr>
+            <tr><td>MRPC</td><td>56.23</td><td>58.48</td><td>60.12</td></tr>
+            <tr><td>CommonsenseQA</td><td>56.32</td><td>58.65</td><td>60.77</td></tr>
+            <tr><td>OpenBookQA</td><td>56.22</td><td>58.46</td><td>60.05</td></tr>
+            <tr><td>ScienceQA</td><td>55.89</td><td>58.99</td><td>60.30</td></tr>
+            <tr class="avg"><td>Average (MDL)</td><td>56.23</td><td>58.63</td><td><strong>60.18</strong></td></tr>
+            <tr class="avg"><td>LayerIF</td><td>56.41</td><td>58.67</td><td><strong>60.18</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap">
+        <h3>Gemma-7B Pruning — 50% Sparsity, Mean Zero-Shot Accuracy (%)</h3>
+        <p class="note">Layer cap 0.55. Rows show calibration dataset used to compute influence scores.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Calibration Dataset</th>
+              <th>Magnitude</th>
+              <th>Wanda</th>
+              <th>SparseGPT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>CoLA</td><td>33.03</td><td>48.36</td><td>49.28</td></tr>
+            <tr><td>MRPC</td><td>33.49</td><td>52.06</td><td>50.77</td></tr>
+            <tr><td>CommonsenseQA</td><td>33.51</td><td>50.26</td><td>49.28</td></tr>
+            <tr><td>OpenBookQA</td><td>33.52</td><td>48.09</td><td>48.11</td></tr>
+            <tr><td>ScienceQA</td><td>33.15</td><td>48.58</td><td>48.66</td></tr>
+            <tr class="avg"><td>Average (MDL)</td><td><strong>33.34</strong></td><td>49.47</td><td>49.22</td></tr>
+            <tr class="avg"><td>LayerIF</td><td>32.91</td><td><strong>52.30</strong></td><td><strong>50.79</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>All rights reserved with <a href="https://tkai-lab-mali.github.io" target="_blank" rel="noopener noreferrer">TKAI Lab</a>.</p>
+  </footer>
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" defer></script>
+  <script src="script.js"></script>
+</body>
+</html>

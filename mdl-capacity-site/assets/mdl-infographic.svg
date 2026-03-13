@@ -1,0 +1,61 @@
+<svg width="960" height="620" viewBox="0 0 960 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E9F8F6"/>
+      <stop offset="100%" stop-color="#FDF5E7"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#2AA499"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#2B4F4B"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="620" rx="20" fill="url(#g1)"/>
+
+  <text x="40" y="58" fill="#173A36" font-size="34" font-family="Georgia, serif" font-weight="700">Curvature-Weighted MDL Pipeline</text>
+  <text x="40" y="88" fill="#406763" font-size="18" font-family="Arial, sans-serif">From layer gains to optimal allocation and pruning</text>
+
+  <rect x="40" y="130" width="240" height="130" rx="14" fill="#FFFFFF" stroke="#9ECFC8"/>
+  <text x="56" y="164" fill="#204D48" font-size="18" font-family="Arial, sans-serif" font-weight="700">1) Curvature Scoring</text>
+  <text x="56" y="192" fill="#335E5A" font-size="14" font-family="Arial, sans-serif">Compute zeta_k^2 = g_k^T H_tilde^-1 g_k</text>
+  <text x="56" y="214" fill="#335E5A" font-size="14" font-family="Arial, sans-serif">Measures reducible risk per layer</text>
+
+  <rect x="360" y="130" width="240" height="130" rx="14" fill="#FFFFFF" stroke="#9ECFC8"/>
+  <text x="376" y="164" fill="#204D48" font-size="18" font-family="Arial, sans-serif" font-weight="700">2) Normalize Scores</text>
+  <text x="376" y="192" fill="#335E5A" font-size="14" font-family="Arial, sans-serif">q_k = zeta_k^2 / sum_j zeta_j^2</text>
+  <text x="376" y="214" fill="#335E5A" font-size="14" font-family="Arial, sans-serif">Interpretable quality distribution</text>
+
+  <rect x="680" y="130" width="240" height="130" rx="14" fill="#FFFFFF" stroke="#9ECFC8"/>
+  <text x="696" y="164" fill="#204D48" font-size="18" font-family="Arial, sans-serif" font-weight="700">3) Convex Programs</text>
+  <text x="696" y="192" fill="#335E5A" font-size="14" font-family="Arial, sans-serif">Allocation under budget B</text>
+  <text x="696" y="214" fill="#335E5A" font-size="14" font-family="Arial, sans-serif">Pruning under sparsity target S</text>
+
+  <line x1="282" y1="194" x2="350" y2="194" stroke="#2B4F4B" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <line x1="602" y1="194" x2="670" y2="194" stroke="#2B4F4B" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <rect x="80" y="330" width="360" height="210" rx="16" fill="#FFFFFF" stroke="#B7D9D4"/>
+  <text x="102" y="366" fill="#204D48" font-size="22" font-family="Georgia, serif" font-weight="700">Allocation Output</text>
+  <text x="102" y="393" fill="#335E5A" font-size="14" font-family="Arial, sans-serif">e_k* = max{ gamma q_k^beta / ((alpha + lambda*) c_k) - 1, 0 }</text>
+  <rect x="102" y="416" width="300" height="14" rx="7" fill="#E6F4F2"/>
+  <rect x="102" y="416" width="250" height="14" rx="7" fill="url(#g2)"/>
+  <text x="102" y="452" fill="#335E5A" font-size="13" font-family="Arial, sans-serif">High q_k layers receive more capacity</text>
+  <text x="102" y="474" fill="#335E5A" font-size="13" font-family="Arial, sans-serif">Unique dual variable found by bisection</text>
+  <text x="102" y="496" fill="#335E5A" font-size="13" font-family="Arial, sans-serif">Complexity: O(K log 1/eps)</text>
+
+  <rect x="520" y="330" width="360" height="210" rx="16" fill="#FFFFFF" stroke="#D9C2DA"/>
+  <text x="542" y="366" fill="#4A2E55" font-size="22" font-family="Georgia, serif" font-weight="700">Pruning Output</text>
+  <text x="542" y="393" fill="#61426A" font-size="14" font-family="Arial, sans-serif">rho_k* = clip((b + lambda*) n_k / (2 eta q_k^kappa), 0, 1)</text>
+  <rect x="542" y="416" width="300" height="14" rx="7" fill="#F4EBF5"/>
+  <rect x="542" y="416" width="120" height="14" rx="7" fill="#A85CB0"/>
+  <text x="542" y="452" fill="#61426A" font-size="13" font-family="Arial, sans-serif">Low q_k layers are pruned more aggressively</text>
+  <text x="542" y="474" fill="#61426A" font-size="13" font-family="Arial, sans-serif">High q_k layers are protected from degradation</text>
+  <text x="542" y="496" fill="#61426A" font-size="13" font-family="Arial, sans-serif">Global sparsity target enforced</text>
+
+  <path d="M800 260C792 298 760 318 700 330" stroke="#2B4F4B" stroke-width="2.5" stroke-dasharray="6 6" marker-end="url(#arrow)"/>
+  <path d="M800 260C785 298 742 318 280 330" stroke="#2B4F4B" stroke-width="2.5" stroke-dasharray="6 6" marker-end="url(#arrow)"/>
+
+  <text x="40" y="590" fill="#4F6562" font-size="13" font-family="Arial, sans-serif">Transfer insight: regret_A->B <= O(||q^(A) - q^(B)||^2), enabling robust warm-starting across domains.</text>
+</svg>
