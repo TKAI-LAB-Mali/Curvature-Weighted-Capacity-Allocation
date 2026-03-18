@@ -1,7 +1,76 @@
 #!/bin/bash
 
+#
+# Module for expert allocation experiments.
+#
+# Prerequisites (run before executing):
+#    1. Generate IF values: python mdl/logUtility.py
+#    2. Ensure mdl/data/max-1/all-ifs-values/*.json exist
+#    3. set json_config_dir to the correct directory
+#    4. Set CUDA_VISIBLE_DEVICES if needed
+#    5. At line 238, set the appropriate get_expert_config function
+#
+# Usage:
+#     bash run_all.sh
+#
+
 # Set the root data path
 root_data_path="/data/mdl-layerIF/Expert_Allocation"
+json_config_dir="/data/mdl-layerIF/mdl/data/max-1/negative-if"
+
+# ntfy notifications (subscribe to curvature-mdl in ntfy app)
+ntfy_topic="curvature-mdl"
+notify() { curl -s -d "$1" "https://ntfy.sh/$ntfy_topic" > /dev/null; }
+
+# Capture exit code of commands in pipelines (for error notifications)
+set -o pipefail
+
+# Function to get expert config from JSON files in mdl/data/max-1/all-ifs-values/
+# Uses same interface as get_expert_config_*: sets number_experts and top_k as comma-separated strings
+get_expert_config_from_json() {
+  local dataset=$1
+  local json_file=""
+
+  # Map dataset name (from data path) to JSON filename
+  case $dataset in
+    *mrpc*)
+      json_file="$json_config_dir/mrpc.json"
+      ;;
+    *cola*)
+      json_file="$json_config_dir/cola.json"
+      ;;
+    *scienceq*|*text_science*)
+      json_file="$json_config_dir/text_science_q_rebuttal.json"
+      ;;
+    *commonq*)
+      json_file="$json_config_dir/commonq.json"
+      ;;
+    *openbook*)
+      json_file="$json_config_dir/openbook.json"
+      ;;
+    *)
+      echo "Warning: No JSON config for $dataset in $json_config_dir, using default"
+      number_experts="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+      top_k="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+      return
+      ;;
+  esac
+
+  if [[ ! -f "$json_file" ]]; then
+    echo "Warning: JSON file not found: $json_file, using default"
+    number_experts="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+    top_k="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+    return
+  fi
+
+  if command -v jq &> /dev/null; then
+    number_experts=$(jq -r '.number_experts | join(",")' "$json_file")
+    top_k=$(jq -r '.top_k | join(",")' "$json_file")
+  else
+    number_experts=$(python3 -c "import json; d=json.load(open('$json_file')); print(','.join(map(str, d['number_experts'])))")
+    top_k=$(python3 -c "import json; d=json.load(open('$json_file')); print(','.join(map(str, d['top_k'])))")
+  fi
+}
 
 # Function to get dataset-specific expert configuration
 get_expert_config_all_IFs() {
@@ -159,6 +228,7 @@ data_paths=(
 )
 
 # Loop through data paths and run experiments
+notify "Expert allocation: started (${#data_paths[@]} datasets)"
 for data_path in "${data_paths[@]}"; do
   # Extract filename from data path
   filename=$(basename "$data_path")
@@ -168,14 +238,17 @@ for data_path in "${data_paths[@]}"; do
   echo "=========================================="
   echo "Processing: $filename"
   echo "=========================================="
+  notify "Started: $filename"
 
   # Get dataset-specific configuration
-  #NOTE: put appropriate get_expert_config function in the line below
-  get_expert_config_negative_IFs_mdl "$filename"
+  # NOTE: Use one of: get_expert_config_from_json (reads mdl/data/max-1/all-ifs-values/*.json),
+  #       get_expert_config_all_IFs, get_expert_config_positive_IFs, get_expert_config_negative_IFs,
+  #       get_expert_config_negative_IFs_mdl
+  get_expert_config_from_json "$filename"
   echo "number_experts: $number_experts"
   echo "top_k: $top_k"
 
-  output_dir="$root_data_path/results/all-negative/mdl-output/mistral_IF_5_epoch_$filename"
+  output_dir="$root_data_path/results/max-1/negative-if/mdl-output/mistral_IF_5_epoch_$filename"
   mkdir -p "$output_dir"
 
   # Run experiment
@@ -199,11 +272,19 @@ for data_path in "${data_paths[@]}"; do
     --group_by_length \
     --add_eos_token \
     --wandb_run_name "mistral_IF_5_epoch_$filename" \
-    2>&1 | tee "$root_data_path/results/all-negative/mdl-output/all-training.log"
-  
-  echo "Completed: $filename"
+    2>&1 | tee "$root_data_path/results/max-1/negative-if/mdl-output/training.log"
+  exit_code=$?
+
+  if [[ $exit_code -eq 0 ]]; then
+    notify "Completed: $filename"
+    echo "Completed: $filename"
+  else
+    notify "ERROR: $filename failed (exit $exit_code)"
+    echo "ERROR: $filename failed"
+  fi
   echo ""
 done
+notify "Expert allocation: all done"
 
 
 # alphalora b=3

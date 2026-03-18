@@ -2,9 +2,14 @@
 
 This file contains information about the progress of the work and notes for later reference.
 
-
 ## Expert Allocation Experiments
-- the compute_IF.py did not produce IF values for initial layers on `text_science_q_rebuttal` and `commonq` datasets. Therefore, compute_IF.py is being executed again for those datasets.
-- the output of run_all.sh for `cola` dataset are stored in `/data/mdl-layerIF/Expert_Allocation/layerIF_Computation/outputs/layerIF_values/mistral-7B`
-- The outputs of `mrpc`, `openbook`. `commonq` and `text_science` are stored in `/data/mdl-layerIF/Expert_Allocation/layerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1`
-- `eval.sh` now performed on cola, mrpc, openbook
+
+### Steps of implementation
+
+1. Go to [mdl/logUtility.py](mdl/logUtility.py) for expert allocation experiments
+2. Adjust scaling factor for budget i.e. `rho` at [mdl/logUtility.py line 188](mdl/logUtility.py#L188) to set the desired budget of number of experts for your dataset of choice. In our experiments `rho` is chosen so that the total experts turn out to 160. This is to follow the convention of layerIF paper.
+3. Check if the folder paths are valid
+4. set your choice of IF values at [mdl/logUtility.py line 147](mdl/logUtility.py line 147)
+5. Execute the program to get `number of experts` and `top_k` values per layer for each dataset
+
+### Hardware requirements for Expert allocation experiment

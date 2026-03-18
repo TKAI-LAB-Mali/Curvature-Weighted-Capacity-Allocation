@@ -76,7 +76,7 @@ def get_el(layer_quality, c_l, lambda_value=1, beta=2, alpha=0.5, gamma=0.9):
     denom = (alpha + lambda_value * c_l)
     denom = np.maximum(denom, 1e-7)    # avoid zero denominator
     raw = gamma * (layer_quality**beta) / denom
-    extra = np.maximum(raw - 1.0, 0.0)
+    extra = np.maximum(raw, 1.0)
     total = 1.0 + extra
     return total
 
@@ -144,7 +144,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, help='model type')
     parser.add_argument('--seed', type=int, default=0, help='Seed for sampling the calibration data')
-    parser.add_argument('--choice', '-c', type=str, default='neg', help="select 'neg', 'pos', 'all' IF values")
+    parser.add_argument('--choice', '-c', type=str, default='all', help="select 'neg', 'pos', 'all' IF values")
     parser.add_argument('--nsamples', type=int, default=128, help='Number of calibration samples')
     parser.add_argument('--cache_dir', default='llm_weights', type=str)
     parser.add_argument('--save', type=str, default=None, help='Path to save results')
@@ -156,11 +156,11 @@ def main():
     experts_path = '/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1'
     output_folder = '/data/mdl-layerIF/Expert_Allocation/layerIF_outputs/'
     data_paths = {
-        '_cola': 'mistral_mola_46810_224_glue_cola_all',
+        # 'cola': 'mistral_mola_46810_224_glue_cola_all',
         'mrpc': 'mistral_mola_46810_224_glue_mrpc_all',
-        'commonq': 'mistral_mola_46810_224_qa_commonq_all',
+        # 'commonq': 'mistral_mola_46810_224_qa_commonq_all',
         'openbook': 'mistral_mola_46810_224_qa_openbook_all',
-        'text_science_q_rebuttal': "mistral_mola_46810_224_qa_text_scienceq_all"
+        # 'text_science_q_rebuttal': "mistral_mola_46810_224_qa_text_scienceq_all"
         }
 
     # Program flow:
@@ -179,13 +179,14 @@ def main():
         layerIFs = util_mali.get_IF(experts_path=experts_path,
                                     dataset=key,
                                     choice=args.choice)
-        print(f"layerIFs: {layerIFs}")
+        # print(f"layerIFs: {layerIFs}")
         c, B = get_B.load_lora_costs(path)
         
         # cola - rho = 0.0245
         # openbook - rho = 0.028 (-ve IFs)
-        # others - rho = 0.0275
-        budget = 0.0276 * B 
+        # others - rho = 0.0 Hello 275
+        rho = 0.0275
+        budget = rho * B 
         # budget = 160 * sum(c)     
         
         
@@ -199,16 +200,16 @@ def main():
         print(f'number_experts="{",".join(map(str, e_l))}"')
         top_k = [2 if e>1 else 1 for e in e_l]
         print(f'top_k="{",".join(map(str, top_k))}"\n')
+
+        os.makedirs('data/max-1/all-if-values', exist_ok=True)
+        with open(os.path.join('data/max-1/all-ifs-values', f'{key}.json'), 'w') as f:
+            json.dump({'total_experts': sum(e_l),
+                       'number_experts': e_l, 
+                       'top_k': top_k,
+                       'lambda_avg': lambda_avg,
+                       'budget': budget,
+                       'rho': rho}, f)
         
-
-    # # number of experts per layer obtained from Hadi's code
-    # layerIF_experts = np.array([1,1,1,1,2,2,4,6,4,6,6,6,6,6,7,7,7,7,6,3,7,6,6,5,5,6,7,6,5,6,7,5])
-    
-    # # check the difference between our number of experts and Hadi's values
-    # assert len(e_l) == len(layerIF_experts)
-    # error = np.sqrt(np.sum((layerIF_experts - e_l)**2) / len(e_l))
-    # print(f"L2 error between MDL and layerIF prediction of experts: {error}")
-
 if __name__ == '__main__':
     main()
 
