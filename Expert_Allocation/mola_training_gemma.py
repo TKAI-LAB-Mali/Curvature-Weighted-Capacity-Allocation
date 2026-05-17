@@ -279,8 +279,8 @@ def train(
                 model.save_pretrained(output_dir)
                 print(f"Model saved at epoch {current_epoch} to {output_dir}")
 
-    # save_at_epoch = [10,15]  # save at the end of training
-    save_at_epoch = [3, 5] # ############################################ modified 
+    save_at_epoch = [10,15]  # save at the end of training
+    # save_at_epoch = [3, 5] # ############################################ modified 
 
     ############################################ modified (added)
 
@@ -357,7 +357,15 @@ def train(
     if torch.__version__ >= "2" and sys.platform != "win32":
         model = torch.compile(model)
 
+    
+
     import time
+    # from model_summary import profile_and_save_summary
+
+
+    # if trainer.args.local_rank == 0 or trainer.args.local_rank == -1:
+    #     print(f"Rank {trainer.args.local_rank}: Profiling model...")
+    #     profile_and_save_summary(model, trainer.args.output_dir)
     start_time = time.time()
     trainer.train()
     

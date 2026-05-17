@@ -43,6 +43,8 @@ def get_model_layers():
         device_map='auto'
     )
     layers={}
+    
+        
     for k,v in base_model.named_parameters():
         #print(k)
         result = extract_layer_number(k)
@@ -132,7 +134,7 @@ def expert_allocator(names=['mrpc', 'cola', 'openbook', 'text_scienceq','commonq
 
 def Our_positive_IF_(IF_pickle_new):
     summed_vector = np.sum(IF_pickle_new, axis=0) 
-    remaining_values = summed_vector[summed_vector>0]
+    remaining_values = summed_vector[summed_vector<0]
     if remaining_values.size == 0:
         return 0
     else:
@@ -148,7 +150,9 @@ def Hadi_positive_IF_(IF_pickle_new):
 def expert_allocator_positive_IF(names=['mrpc', 'cola', 'openbook', 'text_scienceq','commonq'],
                      layer_IF_path='', experts_paths=''):
     
-    layers = get_model_layers()
+    # layers = get_model_layers()
+    layers = ['.0', '.1', '.2', '.3', '.4', '.5', '.6', '.7', '.8', '.9', '.10', '.11', '.12', '.13', '.14', '.15', '.16', '.17', '.18', '.19', '.20', '.21', '.22', '.23', '.24', '.25', '.26', '.27']
+
 
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -161,8 +165,8 @@ def expert_allocator_positive_IF(names=['mrpc', 'cola', 'openbook', 'text_scienc
         layer_IF_path = os.path.join(base_dir, 'outputs', 'layerIF_values', 'gemma-7b')
 
     open(experts_path, 'w').close()  # Clear the file before writing 
-    scaled_IFs = []
-    Hadi_scaled_IFs = []
+    scaled_IFs = ''
+    Hadi_scaled_IFs = ''
     for name in names:
         IFs = []
         IFs_Hadi = []
@@ -190,21 +194,43 @@ def expert_allocator_positive_IF(names=['mrpc', 'cola', 'openbook', 'text_scienc
             IFs_Hadi.append(positive_IF_value_Hadi)
 
 
-        print(f"Positive IF values for {name}: {IFs}")
+        # print(f"Positive IF values for {name}: {IFs}")
         scaled_numbers_fixed = scale_values_final(IFs, target_sum=160, exponent=3) #Can change target sum and exponent here
         scaled_numbers_fixed_Hadi = scale_values_final(IFs_Hadi, target_sum=160, exponent=3) #Can change target sum and exponent here
-        scaled_IFs.append(f"{name}: {scaled_numbers_fixed.tolist()}\n")
-        Hadi_scaled_IFs.append(f"{name}: {scaled_numbers_fixed_Hadi.tolist()}\n")
+        top_k = 2
+        top_k_array = np.clip(scaled_numbers_fixed, 1, top_k).astype(int)
+        top_k_array_Hadi = np.clip(scaled_numbers_fixed_Hadi, 1, top_k).astype(int)
+
+        scaled_numbers_fixed = str(scaled_numbers_fixed.tolist()).replace('[','').replace(']','').replace(' ', '')
+        scaled_numbers_fixed_Hadi = str(scaled_numbers_fixed_Hadi.tolist()).replace('[','').replace(']','').replace(' ', '')
+
+        top_k_array = str(top_k_array.tolist()).replace('[','').replace(']','').replace(' ', '')
+        top_k_array_Hadi = str(top_k_array_Hadi.tolist()).replace('[','').replace(']','').replace(' ', '')
+
+        # bash_case = f'  *"{name}"*)\n  current_experts="{scaled_numbers_fixed}"\n  current_top_k="{top_k_array}"\n  ;;\n'
+        # bash_case_Hadi = f'  *"{name}"*)\n  current_experts="{scaled_numbers_fixed_Hadi}"\n  current_top_k="{top_k_array_Hadi}"\n  ;;\n'
+
+        if name == 'text_scienceq' or name == 'text_science_q_rebuttal':
+            scienceq_case = f'  *"scienceq"*)\n  current_experts="{scaled_numbers_fixed}"\n  current_top_k="{top_k_array}"\n  ;;\n'
+            scienceq_case_Hadi = f'  *"scienceq"*)\n  current_experts="{scaled_numbers_fixed_Hadi}"\n  current_top_k="{top_k_array_Hadi}"\n  ;;\n'
+            scaled_IFs += scienceq_case
+            Hadi_scaled_IFs += scienceq_case_Hadi
+        else:
+            bash_case = f'  *"{name}"*)\n  current_experts="{scaled_numbers_fixed}"\n  current_top_k="{top_k_array}"\n  ;;\n'
+            bash_case_Hadi = f'  *"{name}"*)\n  current_experts="{scaled_numbers_fixed_Hadi}"\n  current_top_k="{top_k_array_Hadi}"\n  ;;\n'
+            scaled_IFs += bash_case
+            Hadi_scaled_IFs += bash_case_Hadi
+        # print(top_k_array)
+        
+        # scaled_IFs += f"{name}: {scaled_numbers_fixed}\n"
+        # Hadi_scaled_IFs += f"{name}: {scaled_numbers_fixed_Hadi}\n"
 
     
     with open(experts_path, 'a') as f:
-        for line in scaled_IFs:
-            line = line.replace('[','').replace(']','').replace(' ', '')
-            f.write(line)
-        f.write("\nHadi Method Positive IF Allocation:\n")
-        for line in Hadi_scaled_IFs:
-            line = line.replace('[','').replace(']','').replace(' ', '')
-            f.write(line)
+        f.write(f"##Our Method Positive IF Allocation Cases##\n")
+        f.write(scaled_IFs)
+        f.write(f"\n##Hadi's Method Positive IF Allocation Cases##\n")
+        f.write(Hadi_scaled_IFs)
 
 #Top k ratio IF values
 
@@ -265,6 +291,8 @@ if __name__ == "__main__":
     # expert_allocator_topk_ratio_IF(names=['mrpc', 'cola', 'openbook', 'text_science_q_rebuttal','commonq'],
     #                  layer_IF_path='',
     #                  top_k_ratio=0.25)
+
+    # get_model_layers()
 
     
     

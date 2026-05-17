@@ -75,3 +75,34 @@ def get_all_layer_connections(json_file):
     return per_layer_connections
 # Run
 # get_all_layer_connections('mola_lora_summary.json')
+
+
+
+
+def describe_array(arr, name="a_array", include_last_segment=True):
+    # Find where values change
+    change_points = np.where(np.diff(arr) != 0)[0] + 1
+
+    
+    # Build segment boundaries: [(start, end), ...]
+    starts = np.concatenate([[0], change_points])
+    ends = np.concatenate([change_points, [len(arr)]])
+    
+    parts = []
+    for i, (s, e) in enumerate(zip(starts, ends)):
+        val = arr[s]
+        # Format value: 0.3 -> "0_3"
+        val_str = str(round(val, 10)).replace(".", "_")
+        # Last segment uses open-ended slice
+        if not include_last_segment and i == len(starts) - 1:
+            break
+        slice_str = f"[{s}:{e if e != len(arr) else ''}]"
+        parts.append(f"{slice_str}_{val_str}")
+    
+    return name + "".join(parts)
+
+
+if __name__ == "__main__":
+    arr = np.array([0.3] + [0.9]*24)
+    print(arr)
+    print(describe_array(arr, name="", include_last_segment=False))

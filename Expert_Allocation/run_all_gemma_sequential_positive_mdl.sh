@@ -5,13 +5,13 @@ root_data_path="/data/mdl-layerIF/Expert_Allocation"
 # 1. Define Datasets
 data_paths=(
   "$root_data_path/datasets/glue_mrpc_all.hf/"
-  "$root_data_path/datasets/glue_cola_all.hf/"
-  "$root_data_path/datasets/qa_text_scienceq_all.hf/"
-  "$root_data_path/datasets/qa_commonq_all.hf/"
-  "$root_data_path/datasets/qa_openbook_all.hf/"
+#   "$root_data_path/datasets/glue_cola_all.hf/"
+#   "$root_data_path/datasets/qa_text_scienceq_all.hf/"
+#   "$root_data_path/datasets/qa_commonq_all.hf/"
+#   "$root_data_path/datasets/qa_openbook_all.hf/"
 )
 
-sub_directory="positive_mdl_IF_correct"
+sub_directory="positive_mdl_IF_test"
 Set1="positive_mdl_IF"
 Set2="Hadi_positive_IF"
 
@@ -41,7 +41,7 @@ run_training() {
     echo "OUTPUT: $output_dir"
     echo "--------------------------------------------------"
 
-    torchrun --nproc_per_node=4 --master_port=$port mola_training_gemma.py \
+    torchrun --nproc_per_node=1 --master_port=$port mola_training_gemma.py \
       --base_model "google/gemma-7b" \
       --data_path "$data_path" \
       --output_dir "$output_dir" \

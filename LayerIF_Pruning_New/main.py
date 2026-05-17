@@ -143,14 +143,21 @@
 #     main()
 
 import argparse
-import os
+import os, json
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from functools import partialmethod
+from tqdm import tqdm
+tqdm.__init__ = partialmethod(tqdm.__init__, mininterval=60.0)
 
 from lib.prune import prune_wanda, prune_sparsegpt, prune_magnitude, prune_wanda_ww, prune_sparsegpt_ww, prune_magnitude_ww, check_sparsity 
 from lib.eval import eval_ppl, eval_zero_shot
 from lib.esd_utils import get_esd_metrics
+from analysis.utils import get_weight_norms, get_activation_norms, save_norms
+
+
+
 
 
 def get_llm(model, cache_dir="llm_weights"):
@@ -188,16 +195,30 @@ def main():
     # evaluation benchmark
     parser.add_argument("--eval_zero_shot", action="store_true", help="evaluation on zero-shot tasks.")
     parser.add_argument("--dataset", type=str, choices=["boolq", "rte","hellaswag","winogrande", "arc_easy","arc_challenge", "openbookqa"] )
-    parser.add_argument("--eval_wikitext", type=bool, default=True, help="evaluation on wikitext.")
-    parser.add_argument('--rho_l', nargs='+', type=float, default=None, help='layer wise sparsity ratio obtained from MDL based pruning script')
+    # parser.add_argument("--eval_wikitext", type=bool, default=True, help="evaluation on wikitext.")
+    # parser.add_argument("--eval_wikitext", action=argparse.BooleanOptionalAction, default=True, help="evaluation on wikitext.")
+    
+    parser.add_argument("--eval_wikitext", action="store_true", help="evaluation on wikitext.")
+    parser.add_argument('--batch_size', type=int, default=4, help='batch size for zero-shot evaluation')
+    # mdl 
+    parser.add_argument('--mdl_path', default=None, help='specify path to the MDL sparsity ratios file')
+    parser.add_argument('--ratio_name', type=str, default="Unknown_ratio", help='a short name for the pruning ratio set, used for plotting legends.')
+
+    # Norm tracking
+    parser.add_argument("--track_norms", action="store_true",
+                        help="Compute and save weight + activation norms before and after pruning.")
+    parser.add_argument("--norm_n_samples", type=int, default=4,
+                        help="Number of prompts to use for activation norm estimation.")
+    parser.add_argument("--norm_seq_len", type=int, default=128,
+                        help="Sequence length for activation norm forward pass.")
+   
    
     args = parser.parse_args()
     
     np.random.seed(args.seed)
     torch.random.manual_seed(args.seed)
 
-    if args.rho_l:
-        rho_l = [x for x in args.rho_l for _ in range(7)]
+
     
     # get the layerwise metric values of the model
     if "ww" in args.prune_method and not os.path.exists("{}/{}.npy".format(args.ww_metric_cache, args.ww_metric)):
@@ -218,21 +239,61 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False)
     
     device = torch.device("cuda:0")
-    if "7b" in args.model or "13b" in args.model or "30b" in args.model or "65b" in args.model or "70b" in args.model in args.model: # for 30b or 65b or 70b, we use device_map to load onto multiple GPUs, thus the processing here.
+    if any(s in args.model for s in ["7b", "13b", "30b", "65b", "70b"]): # for 30b or 65b or 70b, we use device_map to load onto multiple GPUs, thus the processing here.
         device = model.hf_device_map["lm_head"]
     print("use device ", device)
 
+    # ------------------------------------------------------------------
+    # Norm tracking — BEFORE pruning
+    # ------------------------------------------------------------------
+    if args.track_norms:
+        print("[norms] Computing weight and activation norms BEFORE pruning...")
+        weight_norms_before = get_weight_norms(model)
+        activation_norms_before = get_activation_norms(
+            model, tokenizer, device,
+            n_samples=args.norm_n_samples,
+            seq_len=args.norm_seq_len,
+        )
+        # Save immediately so a crash after pruning doesn't lose the baseline
+        save_norms(weight_norms_before, activation_norms_before, args.save, 
+                   tag=f"before_{args.prune_method}_{args.ratio_name}")
+        print(f"[norms] Saved before-pruning norms to {args.save}")
+
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+    # ------------------------------------------------------------------
+    # Pruning
+    # ------------------------------------------------------------------
+
     if args.sparsity_ratio != 0:
         print("pruning starts")
+
+        mdl_sparsity_ratios = None
+        if args.mdl_path:
+            # print(f"reading mdl sparsity ratios")
+            with open(args.mdl_path, 'r') as file:
+                mdl_sparsity_ratios = json.load(file)
+                mdl_sparsity_ratios = mdl_sparsity_ratios["rho_l"]
+            mdl_sparsity_ratios = [num for num in mdl_sparsity_ratios for _ in range(7)]    # each layer in LLM has 7 weights
+
+        if "OWL" in args.prune_method:
+            print(f"Reading OWL scores for {model_name} to compute pruning ratios.")
+            owl_path = os.path.join(args.ww_metric_cache, f"{args.ww_metric}.txt")
+            if os.path.exists(owl_path):
+                print(f"Reading OWL scores from {owl_path}")
+                with open(owl_path, 'r') as f:
+                    mdl_sparsity_ratios = json.loads(f.read())
+
         # Uniform pruning
-        if args.prune_method == "wanda":
-            prune_wanda(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
+        if args.prune_method == "wanda" or args.prune_method == "wanda_OWL":
+            prune_wanda(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m, ratios=mdl_sparsity_ratios)
 
-        elif args.prune_method == "magnitude":
-            prune_magnitude(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
+        elif args.prune_method == "magnitude" or args.prune_method == "magnitude_OWL":
+            prune_magnitude(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m, ratios=mdl_sparsity_ratios)
 
-        elif args.prune_method == "sparsegpt":
-            prune_sparsegpt(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
+        elif args.prune_method == "sparsegpt" or args.prune_method == "sparsegpt_OWL":
+            prune_sparsegpt(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m, ratios=mdl_sparsity_ratios)
 
         ################################################
         # Pruning with our layerwise pruning ratios
@@ -240,15 +301,39 @@ def main():
             prune_wanda_ww(args, model, tokenizer, device)
 
         elif args.prune_method == "magnitude_ww":
-            prune_magnitude_ww(args, model, tokenizer, device, rho_l=rho_l)
+            prune_magnitude_ww(args, model, tokenizer, device)
 
         elif args.prune_method == "sparsegpt_ww":
             prune_sparsegpt_ww(args, model, tokenizer, device)
+
+    # ------------------------------------------------------------------
+    # Norm tracking — AFTER pruning
+    # ------------------------------------------------------------------
+    if args.track_norms:
+        print("[norms] Computing weight and activation norms AFTER pruning...")
+        weight_norms_after = get_weight_norms(model)
+        activation_norms_after = get_activation_norms(
+            model, tokenizer, device,
+            n_samples=args.norm_n_samples,
+            seq_len=args.norm_seq_len,
+        )
+        save_norms(weight_norms_after, activation_norms_after, args.save, 
+                   tag=f"after_{args.prune_method}_{args.ratio_name}")
+        print(f"[norms] Saved after-pruning norms to {args.save}")
+
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+    # ------------------------------------------------------------------
+    # Evaluation
+    # ------------------------------------------------------------------
             
     sparsity_ratio = check_sparsity(model)
     
     if not os.path.exists(args.save):
-        os.makedirs(args.save)
+        os.makedirs(args.save, exist_ok=True, mode=0o755)
+
+    
     
     if args.eval_wikitext:
         ppl_test = eval_ppl(args, model, tokenizer, device)
@@ -256,8 +341,10 @@ def main():
 
         save_filepath = os.path.join(args.save, f"perplexity_{args.prune_method}_sparsity_{args.sparsity_ratio}.txt")
         with open(save_filepath, "w") as f:
-            print("method\tactual_sparsity\tppl_test", file=f, flush=True)
-            print(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}", file=f, flush=True)
+            # print("method\tactual_sparsity\tppl_test", file=f, flush=True)
+            # print(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}", file=f, flush=True)
+            f.write("method\tactual_sparsity\tppl_test\n")
+            f.write(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}\n")
     
     # zero-shot tasks evaluation
     if args.eval_zero_shot:
@@ -275,13 +362,22 @@ def main():
         else:    
             task_list = ["boolq", "rte","hellaswag","winogrande", "arc_easy","arc_challenge", "openbookqa"]
         num_shot = 0
-        results = eval_zero_shot(args.model, model, tokenizer, task_list, num_shot, accelerate)
+        results = eval_zero_shot(args.model, model, tokenizer, task_list, num_shot, accelerate, 
+                                 cache_dir=args.cache_dir, batch_size=args.batch_size)
         print("zero_shot evaluation results")
-        print(results)
+        # print(results)
+        task_acc = []
+        for task in task_list:
+            task_acc.append(results['results'][task]['acc'])
+        
+        results["avg_acc"] = np.mean(task_acc).item()
 
-        save_filepath = os.path.join(args.save, f"zero_shot_{args.prune_method}_sparsity_{args.sparsity_ratio}_epsilon_{args.epsilon}.txt")
+        save_filepath = os.path.join(args.save, f"zero_shot_{args.prune_method}_sparsity_{args.sparsity_ratio}_epsilon_{args.epsilon}.json")
         with open(save_filepath, "w") as f:
-            print(f"{args.prune_method}:\n{results}", file=f, flush=True)
+            json.dump({
+                f"{args.prune_method}": results,
+            }, f, indent=4)
+            # print(f"{args.prune_method}:\n{results}", file=f, flush=True)
     
     # save model if needed.    
     if args.save_model:

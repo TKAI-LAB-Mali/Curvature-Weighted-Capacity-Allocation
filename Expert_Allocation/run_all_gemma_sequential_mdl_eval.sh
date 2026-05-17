@@ -22,13 +22,12 @@ data_paths=(
   "$root_data_path/datasets/qa_commonq_all.hf/"
   "$root_data_path/datasets/qa_openbook_all.hf/"
 )
-Set1="Our_positive_IF"
-Set2="Have_positive_IF"
-sub_directory="positive_IF_correct_5epochs"
 
-# Define the Experiment Sets to Evaluate
-# experiment_sets=("$Set1" "$Set2")
-experiment_sets=("$Set1")
+
+sub_directory="mdl_IF_beta_3_mbatch_4"
+run_suffix="All_mdl_IF"
+
+
 
 # 2. Main Loop
 for data_path in "${data_paths[@]}"; do
@@ -56,74 +55,66 @@ for data_path in "${data_paths[@]}"; do
     continue
   fi
 
-  # --- INNER LOOP: PROCESS BOTH SETS (Set1 & Set2) ---
-  for run_suffix in "${experiment_sets[@]}"; do
+
       
-      echo "   >>> Evaluating Run: $run_suffix"
+  echo "   >>> Evaluating Run: $run_suffix"
 
       # 3. DEFINE CONFIGURATION BASED ON SET
-      # (These must match what you used in run_all_gemma_sequential_v2.sh)
+  case "$filename" in
+  #===========================================
+  # Beta = 2
+  #===========================================
+#   *"mrpc"*)
+#   current_experts="1,8,7,7,6,6,7,6,6,7,7,6,6,6,5,5,4,5,2,5,6,6,6,6,6,6,5,7"
+#   current_top_k="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+#   ;; 
+#   *"cola"*)
+#   current_experts="1,7,7,7,6,6,7,6,7,5,5,4,5,5,5,5,4,3,3,3,7,7,8,7,8,8,8,7"
+#   current_top_k="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+#   ;; 
+#   *"openbook"*)
+#   current_experts="1,7,7,5,5,5,7,6,5,7,7,5,6,6,6,4,5,6,4,5,7,6,5,6,5,7,7,8"
+#   current_top_k="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+#   ;; 
+#   *"scienceq"*)
+#   current_experts="1,9,5,5,4,4,7,4,4,6,6,10,6,6,6,7,6,5,3,9,7,7,5,6,5,6,6,8"
+#   current_top_k="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+#   ;; 
+#   *"commonq"*)
+#   current_experts="1,7,6,5,5,7,9,7,6,8,6,5,7,7,6,5,5,5,3,5,6,5,4,5,4,6,7,7"
+#   current_top_k="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+#   ;;
+    #===========================================
+    # Beta = 3
+    #===========================================
+  *"mrpc"*)
+  current_experts="1,9,8,8,6,6,7,6,5,7,7,5,7,5,5,5,3,4,1,5,7,7,6,6,5,6,4,8"
+  current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2"
+  ;; 
+  *"cola"*)
+  current_experts="1,7,8,8,5,6,8,6,7,5,5,3,4,4,4,4,3,2,2,2,7,8,9,8,9,9,9,8"
+  current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
+  ;; 
+  *"openbook"*)
+  current_experts="1,7,7,5,4,5,7,6,4,7,7,5,6,7,7,3,4,6,3,5,7,6,5,6,5,8,8,9"
+  current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
+  ;; 
+  *"scienceq"*)
+  current_experts="1,11,5,4,4,3,7,3,3,6,6,12,6,6,6,7,5,5,2,11,7,7,5,5,4,5,6,9"
+  current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
+  ;; 
+  *"commonq"*)
+  current_experts="1,8,6,4,4,8,11,7,6,9,6,4,7,7,6,5,5,5,3,5,6,5,3,5,4,6,7,8"
+  current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
+  ;;
+  *)
+  echo "Using default config for $filename"
+  current_experts="1,5,7,6,5,6,5,8,8,8,7,7,5,4,5,7,6,4,7,7,6,7,7,3,4,6,4,5"
+  current_top_k="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
+  ;;
+  esac
       
-      if [ "$run_suffix" == "$Set1" ]; then
-          # --- SET 1 CONFIGS (Original) ---
-          case "$filename" in
-            *"commonq"*)
-            current_experts="5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6"
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-            *"mrpc"*)
-              current_experts="5,5,5,6,6,6,6,6,6,6,1,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6"
-              current_top_k="1,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-              ;;
-            *"cola"*)
-              current_experts="5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,1,6,6,6"
-              current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2"
-              ;;
-            *"openbook"*)
-            current_experts="3,1,6,3,6,6,6,6,6,6,6,6,6,6,6,6,6,7,6,7,7,7,7,6,7,1,7,7"
-            current_top_k="1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2"
-            ;;
-            *"scienceq"*)
-            current_experts="1,6,6,6,6,6,6,6,6,6,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,5,5" 
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-            *)
-            echo "Using default config for $filename"
-            current_experts="1,5,7,6,5,6,5,8,8,8,7,7,5,4,5,7,6,4,7,7,6,7,7,3,4,6,4,5"
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-          esac
-
-      elif [ "$run_suffix" == "$Set2" ]; then
-          # --- SET 2 CONFIGS (New Experiments) ---
-          case "$filename" in
-            *"commonq"*)
-            current_experts="1,5,6,5,4,5,4,6,7,8,7,6,4,4,7,10,7,6,9,6,7,7,6,5,5,5,3,5"
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-            *"mrpc"*)
-            current_experts="1,5,7,6,6,6,5,6,4,8,9,8,8,6,6,7,6,5,7,7,6,5,5,5,4,5,2,5"
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-            *"cola"*)
-            current_experts="1,3,7,7,8,8,9,9,9,8,7,8,8,5,6,8,6,7,5,5,4,4,4,4,3,2,2,3"
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-            *"openbook"*)
-            current_experts="1,5,8,6,5,6,4,8,8,10,7,8,4,3,5,7,6,3,8,8,6,7,7,2,4,6,3,5"
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-            *"scienceq"*)
-            current_experts="1,17,7,7,4,5,3,5,5,10,14,4,3,3,2,7,2,2,5,6,5,5,5,7,5,5,2,14" 
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-            *)
-            echo "Using default config for $filename"
-            current_experts="1,5,7,6,5,6,5,8,8,8,7,7,5,4,5,7,6,4,7,7,6,7,7,3,4,6,4,5"
-            current_top_k="1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2"
-            ;;
-          esac
-      fi
+      
 
       # 4. FIND CHECKPOINTS
       training_dir="$root_data_path/training/${sub_directory}/gemma_IF_${filename}_${run_suffix}"
@@ -145,7 +136,7 @@ for data_path in "${data_paths[@]}"; do
 
           echo "      Running: FINAL MODEL (Parent Dir)"
           
-          CUDA_VISIBLE_DEVICES=0,1 python "$evaluation_script" \
+          CUDA_VISIBLE_DEVICES=0,1,2,3 python "$evaluation_script" \
             --test_dataset "$current_test_file" \
             --base_model "google/gemma-7b" \
             --mola_weights "$training_dir" \
@@ -180,14 +171,7 @@ for data_path in "${data_paths[@]}"; do
       for ckpt_path in $checkpoints; do
           ckpt_name=$(basename "$ckpt_path")
           
-          # Skip very early checkpoints if desired
-          if [[ "$ckpt_name" == "checkpoint-10" ]] && [[ "$run_suffix" == "$Set1" ]]; then
-              # Keep checkpoint-10 for Set1 if that's your only good one from the past
-              :
-          elif [[ "$ckpt_name" == "checkpoint-10" ]]; then
-               # For new runs, we usually want the later checkpoints, but keeping 10 is fine too.
-               :
-          fi
+          
 
           # --- CHECK FOR VALIDITY (Since you fixed the Trainer, these should be good) ---
           if [ ! -f "$ckpt_path/adapter_config.json" ]; then
@@ -205,7 +189,7 @@ for data_path in "${data_paths[@]}"; do
 
           echo "      Running: $ckpt_name"
           
-          CUDA_VISIBLE_DEVICES=0,1 python "$evaluation_script" \
+          CUDA_VISIBLE_DEVICES=0,1,2,3 python "$evaluation_script" \
             --test_dataset "$current_test_file" \
             --base_model "google/gemma-7b" \
             --mola_weights "$ckpt_path" \
@@ -224,7 +208,7 @@ for data_path in "${data_paths[@]}"; do
 
       done # End Checkpoint Loop
 
-  done # End Set Loop
+
 
 done # End Dataset Loop
 

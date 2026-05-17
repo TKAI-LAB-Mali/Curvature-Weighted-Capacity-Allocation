@@ -247,7 +247,6 @@ class LORAEngineGeneration(object):
             # self.validation_dataset = Dataset.load_from_disk(os.path.join(dataset_folder, "qa_text_scienceq_validation_IF-5.hf"))
             self.train_dataset = Dataset.load_from_disk(os.path.join(dataset_folder, "qa_text_scienceq_train_IF-short.hf"))
             self.validation_dataset = Dataset.load_from_disk(os.path.join(dataset_folder, "qa_text_scienceq_validation_IF-short.hf"))
-
         
    
     def create_tokenized_datasets(self,dataset_name):
