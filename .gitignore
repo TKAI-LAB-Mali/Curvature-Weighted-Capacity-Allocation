@@ -25,9 +25,16 @@ bin/
 templates*
 .DS*
 *.safetensors
-# Embedded git repositories (keep them separate or as submodules)
-# Expert_Allocation/
-# LayerIF_Pruning_New/
+
+# Local venv accidentally created inside the project root (uv/pip)
+/bin/
+/lib/
+/lib64
+/share/
+/pyvenv.cfg
+/CACHEDIR.TAG
+/.lock
+/uv/
 
 # data files
 *.gz
