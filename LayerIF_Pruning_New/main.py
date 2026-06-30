@@ -138,7 +138,8 @@ def main():
         mdl_sparsity_ratios = None
         if args.mdl:
             print(f"reading mdl sparsity ratios")
-            with open(f'/data/mdl-layerIF/mdl/data/prune_ub-0.51-{args.mdl}.json', 'r') as file:
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            with open(os.path.join(project_root, f'mdl/data/prune_ub-0.51-{args.mdl}.json'), 'r') as file:
                 mdl_sparsity_ratios = json.load(file)
             mdl_sparsity_ratios = [num for num in mdl_sparsity_ratios for _ in range(7)]    # each layer in LLM has 7 weights
         #======================================

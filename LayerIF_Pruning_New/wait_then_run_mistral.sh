@@ -1,7 +1,8 @@
 #!/bin/bash
 
 CURRENT_SCRIPT="run_mistral_mdl.sh"
-NEXT_SCRIPT="/data2/mdl-layerIF/LayerIF_Pruning_New/run_mistral_mdl_depth_prior.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NEXT_SCRIPT="$SCRIPT_DIR/run_mistral_mdl_depth_prior.sh"
 
 # Directory where run_mistral_mdl.sh saves results, and total number of jobs
 # Total = 4 families × 5 datasets × 3 methods = 60

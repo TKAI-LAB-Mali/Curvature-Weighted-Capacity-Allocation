@@ -3,7 +3,8 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # cache_dir="$HOME/.cache/huggingface/hub/" # 
 cache_dir="llm_weights/"
 
-root_ratio_path="/data2/mdl-layerIF/mdl/data_dp"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+root_ratio_path="$PROJECT_ROOT/mdl/data_dp"
 model_name="Mistral-7B-v0.1"
 model_path="mistralai/Mistral-7B-v0.1"
 
