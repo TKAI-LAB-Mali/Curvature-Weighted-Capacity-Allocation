@@ -3,15 +3,15 @@
 ## Installation
 Create the conda environment from the file full-environment.yml
 
-Then for mistral go to the folder lm-evaluation-harness and run:
+Then for mistral install lm-evaluation-harness (pinned via requirements.txt) and torch:
 
-```pip install -e .
+```pip install -r ../requirements.txt
    pip install torch==1.10.1+cu113
 ```
 
-For gemma rename the lm-evaluation-harness-gemma folder to lm-evaluation-harness, then go to the folder lm-evaluation-harness and run:
+For gemma, use the same lm-evaluation-harness install with a different torch build:
 
-```pip install -e .
+```pip install -r ../requirements.txt
    pip install torch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
 ```
 
