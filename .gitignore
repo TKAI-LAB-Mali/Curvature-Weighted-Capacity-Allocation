@@ -12,7 +12,6 @@ LayerIF_Pruning_Old
 *.npy
 *.yml
 *.txt
-*prompt*
 share/
 *.pyc
 *.log

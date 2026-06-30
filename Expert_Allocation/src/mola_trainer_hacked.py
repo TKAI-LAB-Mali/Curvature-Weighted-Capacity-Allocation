@@ -2,6 +2,11 @@
 
 """
 The Trainer class, to easily train a 🤗 Transformers from scratch or finetune it on a new task.
+
+Adapted from HuggingFace Transformers' trainer.py
+(https://github.com/huggingface/transformers), licensed under the
+Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0),
+to support MoLA (Mixture of LoRA Adapters) training.
 """
 
 import contextlib

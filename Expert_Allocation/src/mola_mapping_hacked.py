@@ -1,4 +1,9 @@
 # coding=utf-8
+#
+# Adapted from HuggingFace PEFT's mapping.py
+# (https://github.com/huggingface/peft), licensed under the
+# Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0),
+# to support MoLA (Mixture of LoRA Adapters).
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict
