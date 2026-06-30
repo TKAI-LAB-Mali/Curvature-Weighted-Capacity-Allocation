@@ -1,0 +1,32 @@
+[
+    {
+        "Dataset": "CoLA",
+        "LayerIF": "87.15",
+        "MDL": "87.34"
+    },
+    {
+        "Dataset": "MRPC",
+        "LayerIF": "84.41",
+        "MDL": "84.99"
+    },
+    {
+        "Dataset": "CommonQ",
+        "LayerIF": "82.64",
+        "MDL": "81.57"
+    },
+    {
+        "Dataset": "OpenBook",
+        "LayerIF": "88.40",
+        "MDL": "88.80"
+    },
+    {
+        "Dataset": "ScienceQ",
+        "LayerIF": "94.69",
+        "MDL": "94.92"
+    },
+    {
+        "Dataset": "Average",
+        "LayerIF": "87.46",
+        "MDL": "87.52"
+    }
+]
