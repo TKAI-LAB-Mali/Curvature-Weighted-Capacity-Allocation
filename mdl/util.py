@@ -7,7 +7,6 @@ import pickle as pkl
 import numpy as np
 
 def get_IF(experts_path, dataset):
-    # path = '/data/mdl-layerIF/Expert_Allocation/layerIF_Computation/outputs/layerIF_values/mistral-7B-v0.1'
     layer_IFs = []
     for file in sorted(os.listdir(experts_path)):
         if file.endswith(dataset + '.pkl'):

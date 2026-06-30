@@ -7,6 +7,8 @@ import argparse
 import json
 import os
 import random
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 import torch
 import math
@@ -153,8 +155,8 @@ def main():
     args = parser.parse_args()
     
     print(f"IF choice: {args.choice}")
-    experts_path = '/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1'
-    output_folder = '/data/mdl-layerIF/Expert_Allocation/layerIF_outputs/'
+    experts_path = os.path.join(PROJECT_ROOT, 'Expert_Allocation/LayerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1')
+    output_folder = os.path.join(PROJECT_ROOT, 'Expert_Allocation/layerIF_outputs/')
     data_paths = {
         # 'cola': 'mistral_mola_46810_224_glue_cola_all',
         'mrpc': 'mistral_mola_46810_224_glue_mrpc_all',

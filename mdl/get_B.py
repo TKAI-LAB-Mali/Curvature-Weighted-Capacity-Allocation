@@ -33,7 +33,7 @@ def load_lora_costs(mola_path):
     return c_l, np.sum(b_l)
 
 # Now to use do this Theo and/or Hitesh, in your logutility main function
-# flops_path = "/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/mola_IF_experts_output"
+# flops_path = "<PROJECT_ROOT>/Expert_Allocation/LayerIF_Computation/outputs/mola_IF_experts_output"
 
 # # Load per-layer LoRA costs --> You get this from that json file, I assume it gives values 
 # c, B = load_lora_costs(flops_path)

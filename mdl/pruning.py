@@ -15,6 +15,8 @@ import util
 import util_mali
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def calculate_retained_metrics(json_file, sparsity_ratio=0.3, b=16,
                                 bit_precision=16):
     """
@@ -176,7 +178,7 @@ def get_llm(model, cache_dir="llm_weights"):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default="mistralai/Mistral-7B-v0.1", type=str)
-    parser.add_argument('--cache_dir', default='/data/mdl-layerIF/LayerIF_Pruning_New/llm_weights', type=str)
+    parser.add_argument('--cache_dir', default=os.path.join(PROJECT_ROOT, 'LayerIF_Pruning_New/llm_weights'), type=str)
     parser.add_argument('--sparsity_ratio', default=0.5, type=float)
     parser.add_argument('--bits', '-b', default=16, type=int, help='number of bits per weight value')
     parser.add_argument('--eta', type=float, default=0.5, help='eta in objective function')
@@ -190,9 +192,9 @@ if __name__ == '__main__':
 
     experts_per_layer = [2,9,7,7,6,7,6,5,7,4,4,3,8,4,5,4,2,5,2,2,3,1,3,7,2,1,7,8,8,7,7,7] # [1,2,3]
 
-    model_metadata = '/data/mdl-layerIF/Expert_Allocation/layerIF_outputs/mistral_mola_46810_224_glue_cola_all/mola_lora_summary.json'
+    model_metadata = os.path.join(PROJECT_ROOT, 'Expert_Allocation/layerIF_outputs/mistral_mola_46810_224_glue_cola_all/mola_lora_summary.json')
     # retained_base_params = calculate_retained_metrics(model_metadata, sparsity_ratio=0.3)
-    experts_path = '/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1'
+    experts_path = os.path.join(PROJECT_ROOT, 'Expert_Allocation/LayerIF_Computation/outputs/layerIF_values/Mistral-7B-v0.1')
     data_paths = ['cola', 'mrpc', 'commonq', 'openbook', 'text_science_q_rebuttal']
     
     for data in data_paths:
