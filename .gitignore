@@ -1,29 +1,27 @@
 test/*
-Expert_Allocation/results
-Expert_Allocation/datasets
-Expert_Allocation/LayerIF_Pruning_New/outputs/
 cache-*
 *.arrow
 */__pycache__*
-share/
 LayerIF_Pruning_Old
-*/llm_weights/*
-*.pkl
-*.npy
-*.yml
-*.txt
-share/
 *.pyc
 *.log
-*outputs/
 *.zip
-*wandb/
-*datasets/
-bin/
-*.json
-templates*
 .DS*
 *.safetensors
+.vscode/
+
+# Large, regenerable model weights / caches / run artifacts.
+# Scoped by directory rather than by extension so small, tracked-on-purpose
+# result/config files (e.g. mdl/data/*.json, Expert_Allocation/templates/*.json)
+# elsewhere in the repo aren't silently excluded too.
+*/llm_weights/*
+*/results/*
+*/wandb/*
+*/datasets/*
+*outputs/
+influence_results/
+depth_prior_results/
+dump/
 
 # Local venv accidentally created inside the project root (uv/pip)
 /bin/
