@@ -2,7 +2,8 @@
 
 # Set base paths for data and weights
 
-base_weights_path="/data/mdl-layerIF/Expert_Allocation"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+base_weights_path="$PROJECT_ROOT/Expert_Allocation"
 
 #The weights path should be the same with the output_dir in run_all.sh
 mola_weights=(

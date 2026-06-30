@@ -219,7 +219,7 @@ class LORAEngineGeneration(object):
         self.model=base_model
 
     def load_datasets(self, dataset_name):
-        dataset_folder = '/data/mdl-layerIF/Expert_Allocation/datasets'
+        dataset_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'datasets')
         
         if dataset_name== 'mrpc':
             self.train_dataset = Dataset.load_from_disk(os.path.join(dataset_folder, "glue_mrpc_train_IF-short.hf"))

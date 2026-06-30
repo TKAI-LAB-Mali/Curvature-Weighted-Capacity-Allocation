@@ -21,8 +21,6 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3"
 
 
 import sys
-# sys.path.append('/nas02/Hadi/Incontenxt-influence/DataInf/src')
-# sys.path.insert(1, '/nas02/Hadi/Incontenxt-influence/icl-coverage/src')
 
 from lora_model_alpha import LORAEngineGeneration
 from influence import IFEngineGeneration
@@ -37,7 +35,7 @@ name_list=['commonq', 'text_science_q_rebuttal']  #' openbook', '' , 'mrpc', 'co
 
 for name in tqdm(name_list):
     base_path = "mistralai/Mistral-7B-v0.1" #"Qwen/Qwen2.5-32B"    #"mistralai/Mistral-7B-v0.1"       #"google/gemma-7b" #  #"meta-llama/Llama-2-13b-chat-hf"   # 
-    project_path ="/data/mdl-layerIF/Expert_Allocation/LayerIF_Computation" 
+    project_path = os.path.dirname(os.path.abspath(__file__))
     lora_engine = LORAEngineGeneration(base_path=base_path, 
                                     project_path=project_path,
                                     dataset_name=name)

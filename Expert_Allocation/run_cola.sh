@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Set the root data path
-root_data_path="/data/mdl-layerIF/Expert_Allocation"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+root_data_path="$PROJECT_ROOT/Expert_Allocation"
 
 # Define data paths using the root path
 data_paths=(

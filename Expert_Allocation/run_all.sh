@@ -15,8 +15,9 @@
 #
 
 # Set the root data path
-root_data_path="/data/mdl-layerIF/Expert_Allocation"
-json_config_dir="/data/mdl-layerIF/mdl/data/max-1/negative-if"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+root_data_path="$PROJECT_ROOT/Expert_Allocation"
+json_config_dir="$PROJECT_ROOT/mdl/data/max-1/negative-if"
 
 # ntfy notifications (subscribe to curvature-mdl in ntfy app)
 ntfy_topic="curvature-mdl"
