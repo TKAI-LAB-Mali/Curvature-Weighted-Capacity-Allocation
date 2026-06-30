@@ -1,6 +1,12 @@
 """
 Helpers to support streaming generate output.
 Borrowed from https://github.com/oobabooga/text-generation-webui/blob/ad37f396fc8bcbab90e11ecf17c56c97bfbd4a9c/modules/callbacks.py
+
+SPDX-License-Identifier: AGPL-3.0-only
+This file is licensed under the GNU Affero General Public License v3.0,
+the same license as its upstream source, and is excluded from the MIT
+license that otherwise covers this repository (see LICENSE/NOTICE).
+Currently unused by the rest of the pipeline.
 """
 
 import gc
