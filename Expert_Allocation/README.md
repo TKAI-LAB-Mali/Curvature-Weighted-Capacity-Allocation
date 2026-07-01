@@ -1,67 +1,68 @@
-# Expert_Allocationsx
+# Expert Allocation
 
-1. **Install dependencies**
+This pipeline performs non-uniform Mixture-of-LoRA (MoLA) fine-tuning, where each transformer layer receives a different number of LoRA experts based on its MDL-derived importance score.
 
-For training the models, install alphalora-train.yml
-For eval, install alphalora-eval.yml
+See the root [README](../README.md) for the full end-to-end quickstart.
 
-3. **Determine number of experts and Top K**
+## Dependencies on `mdl/`
 
-   Run the `expert_number.py` script to get the number of experts and the top_k parameters for AlphaPruning:
+- `mdl/logUtility.py` consumes LayerIF values from `LayerIF_Computation/outputs/` and produces per-layer expert counts.
+- Expert counts are passed to `run_all.sh` via the `number_experts` and `top_k` arguments.
 
-   ```bash
-   CUDA_VISIBLE_DEVICES=3 python expert_number.py \
-   --model "mistralai/Mistral-7B-v0.1" \
-   --target_sum 160 \
-   --beta 2.5
-   ```
+## Setup
 
-   For IF and Mola you can use the following for 160 experts on Mistral:
+```bash
+conda env create -f alphalora-train.yml   # training environment
+conda env create -f alphalora-eval.yml    # evaluation environment
+```
 
-   IF_MRPC= 1,4,6,3,4,7,8,11,5,12,10,12,7,9,7,5,8,5,4,1,6,6,1,1,6,3,1,3,1,1,1,1
+## Pipeline steps
 
-   IF_Cola= 1,9,10,8,9,12,10,7,9,9,9,8,6,9,6,4,7,3,2,1,3,4,2,1,4,1,1,1,1,1,1,1
+**1. Compute Layer Influence values**
 
-   IF_Text_Science_Q= 1,1,2,1,2,2,4,6,4,6,6,6,6,6,7,6,7,7,6,3,7,6,6,5,5,6,7,6,5,6,7,5
+```bash
+cd LayerIF_Computation
+python compute_IF.py
+```
 
-   IF_Common_Q= 1,8,6,8,7,6,10,6,11,9,8,9,7,8,7,3,7,6,5,2,6,5,2,1,1,3,1,2,1,1,2,1
+Runs kronfluence on the base model to produce per-layer influence scores in `LayerIF_Computation/outputs/layerIF_values/<model>/`. Then open `LayerIF_Computation/expert_allocator.ipynb` to inspect and plot the raw IF values.
 
-   IF_Openbook= 1,5,5,8,7,5,8,7,8,5,7,7,7,6,6,6,6,6,7,5,7,5,3,2,2,4,3,4,2,2,3,1
+**2. Derive expert counts from MDL**
 
-   AlphaLora=1,3,5,4,5,5,4,4,3,4,3,2,2,3,3,4,9,4,7,7,7,7,7,7,9,7,6,8,6,7,4,3
+```bash
+python ../mdl/logUtility.py
+```
 
-   MoLA(2,4,6,8)= 2,2,2,2,2,2,2,2,4,4,4,4,4,4,4,4,6,6,6,6,6,6,6,6,8,8,8,8,8,8,8,8
+Outputs `number_experts` and `top_k` per layer. Pre-computed allocations for Mistral-7B (160 total experts) for reference:
 
+| Method | Layer assignments (layers 0–31) |
+|--------|---------------------------------|
+| IF_CoLA | 1,9,10,8,9,12,10,7,9,9,9,8,6,9,6,4,7,3,2,1,3,4,2,1,4,1,1,1,1,1,1,1 |
+| IF_MRPC | 1,4,6,3,4,7,8,11,5,12,10,12,7,9,7,5,8,5,4,1,6,6,1,1,6,3,1,3,1,1,1,1 |
+| IF_OpenBook | 1,5,5,8,7,5,8,7,8,5,7,7,7,6,6,6,6,6,7,5,7,5,3,2,2,4,3,4,2,2,3,1 |
+| MoLA(2,4,6,8) | 2,2,2,2,2,2,2,2,4,4,4,4,4,4,4,4,6,6,6,6,6,6,6,6,8,8,8,8,8,8,8,8 |
+| AlphaLora | 1,3,5,4,5,5,4,4,3,4,3,2,2,3,3,4,9,4,7,7,7,7,7,7,9,7,6,8,6,7,4,3 |
 
-4. **Train on six datasets**
+**3. Train MoLA on six datasets**
 
+Edit `run_all.sh` to set these hyperparameters, then run:
 
-   ```bash
-   bash run_all.sh
-   ```
+```bash
+bash run_all.sh
+```
 
-   or alternatively can use the train_all.sh file
+| Parameter | Description |
+|-----------|-------------|
+| `base_model` | Path or HF hub ID of the base LLM |
+| `root_data_path` | Path to the six fine-tuning datasets |
+| `number_experts` | Comma-separated expert count per layer (32 values) |
+| `top_k` | Comma-separated top-k value per layer (32 values) |
+| `output_dir` | Where to save LoRA expert weights |
 
-   Before running the script, ensure to adjust the following hyperparameters in `run_all.sh`:
+**4. Evaluate**
 
-   | Hyperparameters          | Description                                                       |
-   |--------------------------|-------------------------------------------------------------------|
-   | `base_model`             | The path to the base model.                                       |
-   | `root_data_path`         | The path to the six datasets.                                     |
-   | `number_experts`         | The number of experts for each layer (32 numbers).        |
-   | `top_k`                  | The top K value for each layer (32 numbers).              |
-   | `output_dir`             | The directory path to save the LoRA experts' weights.             |
+```bash
+bash eval_all.sh
+```
 
-5. **Evaluate on six datasets**
-
-   Ensure that `mola_weights` corresponds to the `output_dir` used during training, and keep the expert number and top_K settings consistent.
-
-   ```bash
-   bash eval_all.sh
-   ```
-   or alternatively can use the sequential_eval.sh file
-   
-
-   
-
-
+Ensure `mola_weights` matches the `output_dir` from training and that `number_experts`/`top_k` are identical.
