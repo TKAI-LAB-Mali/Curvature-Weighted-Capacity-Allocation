@@ -1,0 +1,44 @@
+[
+    {
+        "Dataset": "CoLA",
+        "all layerIF": "85.62",
+        "all mdl": "87.44",
+        "negative layerIF": "86.1",
+        "negative mdl": "85.9"
+    },
+    {
+        "Dataset": "MRPC",
+        "all layerIF": "83.59",
+        "all mdl": "82.72",
+        "negative layerIF": "82.84",
+        "negative mdl": "84.23"
+    },
+    {
+        "Dataset": "CommonQ",
+        "all layerIF": "81.24",
+        "all mdl": "80.43",
+        "negative layerIF": "81.4",
+        "negative mdl": "80.18"
+    },
+    {
+        "Dataset": "OpenBook",
+        "all layerIF": "85.2",
+        "all mdl": "85",
+        "negative layerIF": "85.8",
+        "negative mdl": "86.4"
+    },
+    {
+        "Dataset": "ScienceQ",
+        "all layerIF": "66.41",
+        "all mdl": "79.77",
+        "negative layerIF": "80.8",
+        "negative mdl": "83.59"
+    },
+    {
+        "Dataset": "Average",
+        "all layerIF": "80.412",
+        "all mdl": "83.072",
+        "negative layerIF": "83.388",
+        "negative mdl": "84.06"
+    }
+]

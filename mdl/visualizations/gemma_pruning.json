@@ -1,0 +1,44 @@
+[
+  {
+    "Calibration dataset": "CoLA",
+    "Magnitude": "33.03",
+    "Wanda": "48.36",
+    "SparseGPT": "49.28"
+  },
+  {
+    "Calibration dataset": "MRPC",
+    "Magnitude": "33.49",
+    "Wanda": "52.06",
+    "SparseGPT": "50.77"
+  },
+  {
+    "Calibration dataset": "CommonsenseQA",
+    "Magnitude": "33.51",
+    "Wanda": "50.26",
+    "SparseGPT": "49.28"
+  },
+  {
+    "Calibration dataset": "OpenBookQA",
+    "Magnitude": "33.52",
+    "Wanda": "48.09",
+    "SparseGPT": "48.11"
+  },
+  {
+    "Calibration dataset": "ScienceQA",
+    "Magnitude": "33.15",
+    "Wanda": "48.58",
+    "SparseGPT": "48.66"
+  },
+  {
+    "Calibration dataset": "Average (MDL)",
+    "Magnitude": "33.34",
+    "Wanda": "49.47",
+    "SparseGPT": "49.22"
+  },
+  {
+    "Calibration dataset": "LayerIF",
+    "Magnitude": "32.91",
+    "Wanda": "52.30",
+    "SparseGPT": "50.79"
+  }
+]

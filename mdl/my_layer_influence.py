@@ -21,6 +21,7 @@ from kronfluence.arguments import FactorArguments, ScoreArguments
 current_dir = os.path.dirname(os.path.abspath(__file__))
 expert_alloc_path = os.path.join(current_dir, '../Expert_Allocation')
 sys.path.append(expert_alloc_path)
+PROJECT_ROOT = os.path.dirname(current_dir)
 
 # now we don't need to add prefix of Expert_Allocation. to the below imports
 from peft import prepare_model_for_int8_training
@@ -161,7 +162,7 @@ def compute_gradients(model, batch, device):
 
 def main(
     base_model: str = "mistralai/Mistral-7B-v0.1",
-    data_path: str = "/data/mdl-layerIF/Expert_Allocation/datasets/glue_cola_all.hf",
+    data_path: str = os.path.join(PROJECT_ROOT, "Expert_Allocation/datasets/glue_cola_all.hf"),
     output_dir: str = "./layer_influence_output",
     lora_r: str = "8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8",
     lora_alpha: int = 16,
