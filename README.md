@@ -69,9 +69,9 @@ The MDL scoring scripts (`logUtility.py`, `pruning.py`, `my_layer_influence.py`,
 # Install uv if you don't have it
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Create the environment and install dependencies from pyproject.toml
+# Create the environment and install all dependencies (reads pyproject.toml + uv.lock)
 uv venv --python 3.10
-uv pip install -e .
+uv sync
 ```
 
 To activate:
@@ -79,7 +79,7 @@ To activate:
 source .venv/bin/activate   # Linux/macOS
 ```
 
-Dependencies are declared in [pyproject.toml](pyproject.toml): numpy, scipy, matplotlib, pandas, scikit-learn, weightwatcher, safetensors, powerlaw, tqdm.
+Dependencies are declared in [pyproject.toml](pyproject.toml) and pinned in [uv.lock](uv.lock): numpy, scipy, matplotlib, pandas, scikit-learn, weightwatcher, safetensors, powerlaw, tqdm.
 
 ### Expert Allocation environment — conda
 
