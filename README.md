@@ -81,7 +81,7 @@ source .venv/bin/activate   # Linux/macOS
 
 Dependencies are declared in [pyproject.toml](pyproject.toml): numpy, scipy, matplotlib, pandas, scikit-learn, weightwatcher, safetensors, powerlaw, tqdm.
 
-### Expert Allocation environment — conda
+<!-- ### Expert Allocation environment — conda
 
 ```bash
 conda env create -f Expert_Allocation/alphalora-train.yml   # training
@@ -97,7 +97,7 @@ pip install torch==1.10.1+cu113          # Mistral
 # or for Gemma:
 # pip install torch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 \
 #   --extra-index-url https://download.pytorch.org/whl/cu113
-```
+``` -->
 
 ---
 
