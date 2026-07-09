@@ -2,7 +2,7 @@
 
 **A Minimum Description Length inspired framework for capacity allocation in a Mixture-Of-Experts Large Language Model**
 
-> UAI 2026 · [OpenReview](https://openreview.net/forum?id=K3RH5EuzD8)
+> UAI 2026 · [OpenReview](https://openreview.net/forum?id=K3RH5EuzD8) 
 > Arxiv · [link](https://arxiv.org/abs/2603.00910)
 
 This repository contains the code for two complementary experiments from the paper:
