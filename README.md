@@ -1,12 +1,13 @@
 # Curvature-Weighted Capacity Allocation
 
-**A Minimum Description Length Framework for Layer-Adaptive Large Language Model Optimization**
+**A Minimum Description Length inspired framework for capacity allocation in a Mixture-Of-Experts Large Language Model**
 
 > UAI 2026 · [OpenReview](https://openreview.net/forum?id=K3RH5EuzD8)
+> Arxiv · [link](https://arxiv.org/abs/2603.00910)
 
 This repository contains the code for two complementary experiments from the paper:
 
-1. **Expert Allocation** — uses MDL to assign a non-uniform number of LoRA experts per layer for Mixture-of-LoRA (MoLA) fine-tuning.
+1. **Expert Allocation** — uses MDL to assign a non-uniform number of experts per layer for Mixture-of-LoRA (MoLA) fine-tuning.
 2. **Layer-wise Pruning** — uses MDL to derive per-layer sparsity ratios for unstructured pruning of large language models.
 
 Both experiments share a common MDL core (`mdl/`) that computes curvature-weighted layer importance scores, which are then consumed by the respective downstream pipelines.
@@ -48,7 +49,8 @@ mdl-layerIF/
 │   ├── data/                       # Pre-computed LayerIF/alpha/OWL metric caches (Mistral, Gemma)
 │   └── full-environment.yml        # Conda environment for pruning experiments
 │
-├── requirements.txt                # Shared Python dependencies (pinned lm-eval, kronfluence, …)
+├── pyproject.toml                  # uv environment for MDL core scripts
+├── requirements.txt                # Full pipeline dependencies (pinned lm-eval, kronfluence, …)
 ├── LICENSE                         # MIT (see NOTICE for third-party licenses)
 └── NOTICE                          # Third-party attributions
 ```
@@ -57,14 +59,36 @@ mdl-layerIF/
 
 ## Setup
 
-### Expert Allocation environment
+There are three environments depending on which part of the pipeline you are running.
+
+### MDL core (`mdl/`) — uv
+
+The MDL scoring scripts (`logUtility.py`, `pruning.py`, `my_layer_influence.py`, etc.) use a lightweight environment managed with [uv](https://docs.astral.sh/uv/).
+
+```bash
+# Install uv if you don't have it
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create the environment and install dependencies from pyproject.toml
+uv venv --python 3.10
+uv pip install -e .
+```
+
+To activate:
+```bash
+source .venv/bin/activate   # Linux/macOS
+```
+
+Dependencies are declared in [pyproject.toml](pyproject.toml): numpy, scipy, matplotlib, pandas, scikit-learn, weightwatcher, safetensors, powerlaw, tqdm.
+
+### Expert Allocation environment — conda
 
 ```bash
 conda env create -f Expert_Allocation/alphalora-train.yml   # training
 conda env create -f Expert_Allocation/alphalora-eval.yml    # evaluation
 ```
 
-### Pruning environment
+### Pruning environment — conda + pip
 
 ```bash
 conda env create -f LayerIF_Pruning_New/full-environment.yml
