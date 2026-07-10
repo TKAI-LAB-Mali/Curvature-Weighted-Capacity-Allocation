@@ -175,9 +175,9 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python LayerIF_Pruning_New/main.py \
 
 ```bibtex
 @inproceedings{
-anonymous2026curvatureweighted,
+uai2026CurvatureWeightedCapacityAllocation,
 title={Curvature-Weighted Capacity Allocation: A Minimum Description Length Framework for Layer-Adaptive Large Language Model Optimization},
-author={Anonymous},
+author={Theophilus Amaefuna, Hitesh Vaidya, Anshuman Chhabra, Ankur Mali},
 booktitle={Forty-Second Annual Conference on Uncertainty in Artificial Intelligence},
 year={2026},
 url={https://openreview.net/forum?id=K3RH5EuzD8}
