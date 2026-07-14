@@ -12,6 +12,10 @@ This repository contains the code for two complementary experiments from the pap
 
 Both experiments share a common MDL core (`mdl/`) that computes curvature-weighted layer importance scores, which are then consumed by the respective downstream pipelines.
 
+## Workflow
+
+![workflow](./mdl/workflow.png)
+
 ---
 
 ## Repository structure
