@@ -200,21 +200,21 @@ class IFEngineGeneration(object):
             print(time() - start_time)   
             
 
-    def save_result(self, layer=".0.", name='mrpc', model_name=None):
+    def save_result(self, layer=".0.", name='mrpc', model_name=None, output_path='./outputs/layerIF_values'):
         results={}
         results['runtime']=self.time_dict
         results['influence']=self.IF_dict
         print(f"runtime: {results['runtime']}")
         print(f"influence: {results['influence']}")
 
-        output_path = './outputs/layerIF_values'
+        
         # Set the umask to 0 so we can control permissions fully
         current_umask = os.umask(0)
 
         try:
             # Create dir with 770 (rwx for owner, rwx for group, nothing for others)
             os.makedirs(output_path, mode=0o770, exist_ok=True)
-            os.makedirs(os.path.join(output_path, model_name), mode=0o770, exist_ok=True)
+            # os.makedirs(os.path.join(output_path, model_name), mode=0o770, exist_ok=True)
         finally:
             # Always restore the umask to the previous state
             os.umask(current_umask)
@@ -222,7 +222,7 @@ class IFEngineGeneration(object):
         # os.makedirs(output_path, exist_ok=True)
 
         # os.makedirs(os.path.join(output_path, model_name), exist_ok=True)
-        with open(os.path.join(output_path, model_name, 
+        with open(os.path.join(output_path, 
                                f"results_{model_name}_{name}_{layer}.pkl"),
                     'wb'
                     ) as file:
