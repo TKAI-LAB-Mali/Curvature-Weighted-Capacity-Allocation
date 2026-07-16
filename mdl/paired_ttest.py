@@ -23,6 +23,7 @@ def run_paired_ttest(name, mdl_data, layerif_data):
     
     print(f"--- {name} ---")
     print(f"Mean Difference (MDL - LayerIF): {mean_diff:.2f}%")
+    print(f"MDL Mean: {np.mean(mdl_data):.2f}%, LayerIF Mean: {np.mean(layerif_data):.2f}%")
     print(f"T-statistic: {res.statistic:.4f}")
     print(f"P-value: {res.pvalue:.4f}")
     
