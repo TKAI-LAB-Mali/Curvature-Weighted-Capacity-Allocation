@@ -178,13 +178,19 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python LayerIF_Pruning_New/main.py \
 ## Citation
 
 ```bibtex
-@inproceedings{
-uai2026CurvatureWeightedCapacityAllocation,
-title={Curvature-Weighted Capacity Allocation: A Minimum Description Length Framework for Layer-Adaptive Large Language Model Optimization},
-author={Theophilus Amaefuna, Hitesh Vaidya, Anshuman Chhabra, Ankur Mali},
-booktitle={Forty-Second Annual Conference on Uncertainty in Artificial Intelligence},
-year={2026},
-url={https://openreview.net/forum?id=K3RH5EuzD8}
+@InProceedings{pmlr-v337-amaefuna26a,
+  title = 	 {Curvature-Weighted Capacity Allocation: A Minimum Description Length Framework for Layer-Adaptive Large Language Model Optimization},
+  author =       {Amaefuna, Theophilus and Vaidya, Hitesh Ulhas and Chhabra, Anshuman and Mali, Ankur},
+  booktitle = 	 {Proceedings of the 42nd Conference on Uncertainty in Artificial Intelligence},
+  pages = 	 {62--86},
+  year = 	 {2026},
+  editor = 	 {Perković, Emilija and Malinsky, Daniel},
+  volume = 	 {337},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {17--21 Aug},
+  publisher =    {PMLR},
+  pdf = 	 {https://raw.githubusercontent.com/mlresearch/v337/main/assets/amaefuna26a/amaefuna26a.pdf},
+  url = 	 {https://proceedings.mlr.press/v337/amaefuna26a.html}
 }
 ```
 
